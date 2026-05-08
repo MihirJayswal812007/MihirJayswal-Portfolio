@@ -1,0 +1,225 @@
+/* ============================================================
+   globals.css — Mihir Jayswal Portfolio
+   All base styles, CSS custom properties, and global utilities.
+   Colour tokens live in tailwind.config.ts — never use raw hex.
+   ============================================================ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── CSS Custom Properties ─────────────────────────────────── */
+:root {
+  /* Colour tokens mirrored for CSS-in-JS / GSAP usage */
+  --color-bg-base:    #02020A;
+  --color-bg-section: #111827;
+  --color-bg-warm:    #1C1A14;
+  --color-gold:       #C8A84B;
+  --color-avatar-blue:#378ADD;
+  --color-luffy-red:  #E24B4A;
+  --color-parchment:  #E8DFC0;
+  --color-dim:        #9CA3AF;
+
+  /* Spacing rhythm */
+  --section-py: clamp(5rem, 10vw, 8rem);
+}
+
+/* ── Base resets ───────────────────────────────────────────── */
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    /* Hide native scrollbar but keep scroll functionality */
+    scrollbar-width: thin;
+    scrollbar-color: #C8A84B #02020A;
+  }
+
+  /* WebKit scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #02020A;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #C8A84B;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #E8DFC0;
+  }
+
+  /* Selection colour — gold on dark */
+  ::selection {
+    background-color: rgba(200, 168, 75, 0.3);
+    color: #E8DFC0;
+  }
+
+  /* Body defaults — font-inter applied via className in layout.tsx */
+  body {
+    background-color: #02020A;
+    color: #E8DFC0;
+    min-height: 100vh;
+    /* Hide default cursor — custom cursor replaces it on desktop */
+    cursor: none;
+  }
+
+  /* Restore cursor on mobile (custom cursor is desktop-only) */
+  @media (pointer: coarse) {
+    body { cursor: auto; }
+  }
+
+  /* Focus ring — gold, accessible */
+  :focus-visible {
+    outline: 2px solid #C8A84B;
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+}
+
+/* ── Film grain SVG filter ─────────────────────────────────── */
+/* Used by: LoadingScreen, HeroSection scanline overlay */
+@layer utilities {
+  .film-grain {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .film-grain::after {
+    content: "";
+    position: absolute;
+    inset: -50%; /* oversized so shifting doesn't show edges */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-size: 256px 256px;
+    opacity: 0.06;
+    pointer-events: none;
+    z-index: 5;
+    animation: grain-shift 0.15s steps(1) infinite;
+    mix-blend-mode: overlay;
+  }
+}
+
+/* ── Scanline overlay utility ──────────────────────────────── */
+@layer utilities {
+  .scanlines {
+    position: relative;
+  }
+  .scanlines::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 3px,
+      rgba(0, 0, 0, 0.07) 3px,
+      rgba(0, 0, 0, 0.07) 4px
+    );
+    pointer-events: none;
+    z-index: 4;
+  }
+}
+
+/* ── Typography utilities ──────────────────────────────────── */
+@layer utilities {
+  /* Eyebrow labels — small caps above section titles */
+  .eyebrow {
+    font-family: var(--font-cinzel);
+    font-size: 0.6875rem; /* 11px */
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--color-gold);
+    opacity: 0.85;
+  }
+
+  /* Movie quotes — italic Cormorant Garamond */
+  .quote-text {
+    font-family: var(--font-cormorant);
+    font-style: italic;
+    font-size: 1.125rem;
+    line-height: 1.7;
+    color: var(--color-dim);
+  }
+
+  /* Terminal text — JetBrains Mono */
+  .terminal-text {
+    font-family: var(--font-jetbrains);
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+}
+
+/* ── Gold border shimmer utility ───────────────────────────── */
+@layer utilities {
+  .border-shimmer {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(200, 168, 75, 0.6) 50%,
+      transparent 100%
+    );
+    background-size: 200% auto;
+    animation: shimmer 3s linear infinite;
+  }
+}
+
+/* ── Section padding ───────────────────────────────────────── */
+@layer utilities {
+  .section-padding {
+    padding-top: var(--section-py);
+    padding-bottom: var(--section-py);
+  }
+}
+
+/* ── 3D card preserve ──────────────────────────────────────── */
+@layer utilities {
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+}
+
+/* ── Grain animation keyframes ─────────────────────────────── */
+/* Also defined in tailwind.config.ts for use via Tailwind class */
+@keyframes grain-shift {
+  0%, 100% { transform: translate(0, 0); }
+  10%       { transform: translate(-2%, -3%); }
+  20%       { transform: translate(1%, 2%); }
+  30%       { transform: translate(-1%, 1%); }
+  40%       { transform: translate(3%, -2%); }
+  50%       { transform: translate(-2%, 3%); }
+  60%       { transform: translate(2%, -1%); }
+  70%       { transform: translate(-3%, 2%); }
+  80%       { transform: translate(1%, -3%); }
+  90%       { transform: translate(-1%, 1%); }
+}
+
+@keyframes breathe {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%       { opacity: 1;   transform: scale(1.08); }
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+@keyframes crawl {
+  0%   { transform: perspective(300px) rotateX(20deg) translateY(100%); }
+  100% { transform: perspective(300px) rotateX(20deg) translateY(-250%); }
+}
