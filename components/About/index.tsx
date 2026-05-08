@@ -82,14 +82,14 @@ export default function AboutSection() {
 
       // Timeline nodes filling gold staggered as they come into view
       const nodes = gsap.utils.toArray(".timeline-node");
-      nodes.forEach((node: HTMLElement) => {
-        gsap.to(node, {
+      nodes.forEach((node) => {
+        gsap.to(node as HTMLElement, {
           backgroundColor: "#C8A84B",
           borderColor: "#C8A84B",
           boxShadow: "0 0 15px rgba(200, 168, 75, 0.4)",
           duration: 0.5,
           scrollTrigger: {
-            trigger: node,
+            trigger: node as HTMLElement,
             start: "top 85%", // Triggers when the node is near the bottom of viewport
             toggleActions: "play none none reverse",
           },

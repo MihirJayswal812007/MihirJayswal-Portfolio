@@ -29,7 +29,7 @@ export default function WordSwarm({ text }: WordSwarmProps) {
     window.addEventListener("resize", checkMobile);
 
     // Calculate random origins for each word
-    const calculatedOrigins = words.map(() => {
+    const calculatedOrigins = text.split(" ").map(() => {
       const angle = Math.random() * Math.PI * 2;
       const distance = 200 + Math.random() * 200; // 200-400px
       return {
