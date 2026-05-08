@@ -13,6 +13,7 @@ import { useState } from "react";
 import LoadingScreen from "@/components/Loading";
 import HeroSection from "@/components/Hero";
 import AboutSection from "@/components/About";
+import SkillsSection from "@/components/Skills";
 import CustomCursor from "@/components/ui/CustomCursor";
 
 export default function Home() {
@@ -32,6 +33,7 @@ export default function Home() {
       <main className={loadingDone ? "block" : "invisible"} aria-hidden={!loadingDone}>
         <HeroSection />
         <AboutSection />
+        <SkillsSection />
       </main>
     </>
   );
