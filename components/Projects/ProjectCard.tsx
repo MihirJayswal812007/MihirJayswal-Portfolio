@@ -30,53 +30,53 @@ export function ProjectCard({
         transition: "border-color 0.5s ease"
       }}
     >
-      <div className="flex flex-col-reverse md:flex-row h-full w-full">
+      <div className="flex flex-col-reverse sm:flex-row h-full w-full">
         {/* LEFT SIDE: Info */}
-        <div className="w-full md:w-[45%] p-6 md:p-8 flex flex-col justify-center relative z-10 border-t md:border-t-0 md:border-r border-[#C8A84B]/10">
-          <div className="space-y-4">
+        <div className="w-full sm:w-[45%] p-5 md:p-6 flex flex-col justify-center relative z-10 border-t sm:border-t-0 sm:border-r border-[#C8A84B]/10 bg-black/40 sm:bg-transparent backdrop-blur-sm sm:backdrop-blur-none">
+          <div className="space-y-2 md:space-y-4">
             <div>
-              <p className="eyebrow text-[#C8A84B] text-[9px] tracking-[0.2em] uppercase mb-2">
+              <p className="eyebrow text-[#C8A84B] text-[8px] md:text-[9px] tracking-[0.2em] uppercase mb-1 md:mb-2">
                 CHAPTER {romanize(index + 1)}
               </p>
-              <h3 className="font-cinzel text-xl md:text-2xl text-parchment leading-tight">
+              <h3 className="font-cinzel text-lg md:text-xl text-parchment leading-tight">
                 {project.title}
               </h3>
-              <p className="font-cormorant italic text-[#C8A84B]/50 text-[12px] md:text-[13px] mt-1">
+              <p className="font-cormorant italic text-[#C8A84B]/50 text-[11px] md:text-[13px] mt-1">
                 {isTeaser ? project.tagline : `In the spirit of · ${project.movie_ref}`}
               </p>
             </div>
 
             {!isTeaser && (
-              <p className="text-dim text-xs md:text-sm leading-relaxed hidden sm:block">
+              <p className="text-dim text-[11px] md:text-xs leading-relaxed hidden lg:block">
                 {project.tagline}
               </p>
             )}
 
             {!isTeaser ? (
               <>
-                <div className="pt-2 hidden sm:block">
-                  <p className="text-[9px] uppercase font-inter text-dim mb-2 tracking-wider">CAST</p>
-                  <div className="flex flex-wrap gap-2">
+                <div className="pt-1 md:pt-2 hidden sm:block">
+                  <p className="text-[8px] md:text-[9px] uppercase font-inter text-dim mb-1 md:mb-2 tracking-wider">CAST</p>
+                  <div className="flex flex-wrap gap-1 md:gap-2">
                     {project.tech.slice(0, 3).map((tech) => (
-                      <span key={tech} className="text-[10px] md:text-[11px] font-inter text-parchment/80 bg-black/40 border border-[#C8A84B]/20 px-2 md:px-3 py-1 rounded-full">
+                      <span key={tech} className="text-[9px] md:text-[10px] font-inter text-parchment/80 bg-black/40 border border-[#C8A84B]/20 px-2 md:px-3 py-1 rounded-full">
                         {tech}
                       </span>
                     ))}
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3 pt-2 md:pt-4">
-                  <Link href={project.live} target="_blank" className="flex items-center gap-2 text-[10px] md:text-xs font-inter text-parchment border border-[#C8A84B]/50 hover:bg-[#C8A84B]/10 transition-colors px-3 md:px-4 py-2 rounded-full pointer-events-auto">
+                <div className="flex flex-wrap items-center gap-2 md:gap-3 pt-2 md:pt-4">
+                  <Link href={project.live} target="_blank" className="flex items-center gap-1 md:gap-2 text-[9px] md:text-[11px] font-inter text-parchment border border-[#C8A84B]/50 hover:bg-[#C8A84B]/10 transition-colors px-3 py-1.5 md:py-2 rounded-full pointer-events-auto">
                     Live Demo <ArrowUpRight className="w-3 h-3" />
                   </Link>
-                  <Link href={project.github} target="_blank" className="flex items-center gap-2 text-[10px] md:text-xs font-inter text-dim border border-dim/30 hover:text-parchment hover:border-dim transition-colors px-3 md:px-4 py-2 rounded-full pointer-events-auto">
+                  <Link href={project.github} target="_blank" className="flex items-center gap-1 md:gap-2 text-[9px] md:text-[11px] font-inter text-dim border border-dim/30 hover:text-parchment hover:border-dim transition-colors px-3 py-1.5 md:py-2 rounded-full pointer-events-auto">
                     GitHub <ArrowUpRight className="w-3 h-3" />
                   </Link>
                 </div>
               </>
             ) : (
-              <div className="pt-4 md:pt-8">
-                <span className="text-[10px] md:text-[11px] font-inter text-[#C8A84B]/80 bg-[#C8A84B]/10 border border-[#C8A84B]/30 px-4 py-2 rounded-full inline-block">
+              <div className="pt-2 md:pt-4">
+                <span className="text-[9px] md:text-[10px] font-inter text-[#C8A84B]/80 bg-[#C8A84B]/10 border border-[#C8A84B]/30 px-3 md:px-4 py-1.5 md:py-2 rounded-full inline-block">
                   In Development
                 </span>
               </div>
@@ -85,7 +85,7 @@ export function ProjectCard({
         </div>
 
         {/* RIGHT SIDE: Visual */}
-        <div className="w-full md:w-[55%] h-[200px] md:h-full relative overflow-hidden flex items-center justify-center bg-black/20">
+        <div className="w-full sm:w-[55%] h-[180px] sm:h-full relative overflow-hidden flex items-center justify-center bg-black/20">
           {/* Ambient Glow */}
           <div
             className={`absolute inset-0 transition-opacity duration-1000 ${isActive ? 'opacity-100' : 'opacity-30'}`}
@@ -97,7 +97,7 @@ export function ProjectCard({
 
           {/* Emoji / Symbol */}
           <div 
-            className="relative z-10 text-[60px] md:text-[80px] filter drop-shadow-2xl"
+            className="relative z-10 text-[50px] md:text-[60px] filter drop-shadow-2xl"
             style={{ 
               animation: isActive ? "float 4s ease-in-out infinite" : "none",
               textShadow: `0 0 40px ${project.accent}80` 

@@ -25,18 +25,18 @@ type ProjectStackItem = CardStackItem & {
 export default function ProjectsSection() {
   const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 480 });
+  const [dimensions, setDimensions] = useState({ width: 640, height: 360 });
 
   // Handle responsive card dimensions since CardStack uses fixed pixel sizes
   useEffect(() => {
     const updateDimensions = () => {
       const w = window.innerWidth;
       if (w < 640) {
-        setDimensions({ width: w - 40, height: 400 });
+        setDimensions({ width: w - 40, height: 420 });
       } else if (w < 1024) {
-        setDimensions({ width: 600, height: 400 });
+        setDimensions({ width: 480, height: 270 });
       } else {
-        setDimensions({ width: 800, height: 480 });
+        setDimensions({ width: 640, height: 360 });
       }
     };
     
@@ -82,6 +82,9 @@ export default function ProjectsSection() {
       {/* Background grain */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.02] mix-blend-overlay z-0" style={{ backgroundImage: 'url(/noise.png)' }}></div>
       
+      {/* Cinematic Vignette */}
+      <div className="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(10,10,10,0.85)_100%)]"></div>
+      
       {/* Section Header */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-6 mb-16 flex flex-col items-center text-center">
         <motion.p
@@ -117,13 +120,14 @@ export default function ProjectsSection() {
             cardWidth={dimensions.width}
             cardHeight={dimensions.height}
             initialIndex={0}
-            autoAdvance={false}
+            autoAdvance={true}
+            intervalMs={3500}
             showDots={true}
-            overlap={0.48}
-            spreadDeg={48}
-            tiltXDeg={12}
+            overlap={0.4}
+            spreadDeg={54}
+            tiltXDeg={18}
             activeScale={1.03}
-            inactiveScale={0.94}
+            inactiveScale={0.92}
             renderCard={(item, { active }) => (
               <ProjectCard 
                 project={(item as ProjectStackItem).project} 
