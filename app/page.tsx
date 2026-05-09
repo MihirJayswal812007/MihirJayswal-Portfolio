@@ -16,6 +16,7 @@ import LoadingScreen from "@/components/Loading";
 import HeroSection from "@/components/Hero";
 import AboutSection from "@/components/About";
 import SkillsSection from "@/components/Skills";
+import ProjectsSection from "@/components/Projects";
 import DevilFruitModal from "@/components/EasterEggs/DevilFruitModal";
 import CustomCursor from "@/components/ui/CustomCursor";
 
@@ -40,6 +41,7 @@ export default function Home() {
         <HeroSection onDevilFruitOpen={() => setDevilFruitOpen(true)} />
         <AboutSection />
         <SkillsSection />
+        <ProjectsSection />
       </main>
 
       {/* ── Easter Eggs — mounted at root, overlay everything ──── */}
