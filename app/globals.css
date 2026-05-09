@@ -242,3 +242,15 @@
 .animate-blink {
   animation: cursor-blink 1s step-end infinite;
 }
+
+/* ── Marquee scroll keyframes ───────────────────────────────── */
+/* Used by SkillMarquee rows — translate duplicated content to loop seamlessly */
+@keyframes marquee-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@keyframes marquee-right {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}

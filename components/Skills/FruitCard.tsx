@@ -10,7 +10,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
-import { type Skill } from "./data";
+import { type Skill } from "@/lib/skills-data";
 
 interface FruitCardProps {
   skill: Skill;

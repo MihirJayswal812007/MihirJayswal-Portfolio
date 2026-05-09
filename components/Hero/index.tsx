@@ -24,7 +24,12 @@ import { fadeIn } from "@/lib/animations";
 const LEFT_SKILLS  = ["AI / ML", "PYTHON", "THREE.JS"];
 const RIGHT_SKILLS = ["GSAP", "FULL STACK", "LANGCHAIN"];
 
-export default function HeroSection() {
+interface HeroSectionProps {
+  /** Called when M·J logo is clicked 3× — opens Devil Fruit modal */
+  onDevilFruitOpen?: () => void;
+}
+
+export default function HeroSection({ onDevilFruitOpen }: HeroSectionProps) {
   const [quoteIndex, setQuoteIndex] = useState(0);
   const [displayedQuote, setDisplayedQuote] = useState("");
   const [isTyping, setIsTyping] = useState(true);
@@ -39,14 +44,14 @@ export default function HeroSection() {
   const leftRef      = useRef<HTMLDivElement>(null);
   const rightRef     = useRef<HTMLDivElement>(null);
 
-  // Logo Easter Egg
+  // Logo Easter Egg — 3 clicks opens Devil Fruit modal
   const [clickCount, setClickCount] = useState(0);
   useEffect(() => {
     if (clickCount >= 3) {
-      console.log("DEVIL FRUIT EASTER EGG TRIGGERED!");
+      onDevilFruitOpen?.();  // lift event to page.tsx
       setClickCount(0);
     }
-  }, [clickCount]);
+  }, [clickCount, onDevilFruitOpen]);
 
   // GSAP entrance: elements fly in from opposite sides, staggered
   useEffect(() => {

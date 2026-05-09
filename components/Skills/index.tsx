@@ -3,48 +3,42 @@
 /**
  * components/Skills/index.tsx
  *
- * Skills Section — Devil Fruit Encyclopedia.
- * 
- * Layout:
- *  - Section label + ghost bg text "ABILITIES"
- *  - Filter tabs: All Fruits | AI/ML | Frontend | Backend | Tools
- *  - Responsive auto-fill card grid
- * 
- * Animations:
- *  - GSAP: section eyebrow + heading slide-in on scroll
- *  - IntersectionObserver: card entry stagger (translateY + opacity)
- *  - CSS 3D: card flip on click
- *  - Tab switch: filter with exit scale + opacity, then re-entry
+ * Skills Section — Devil Fruit Encyclopedia (redesigned).
+ *
+ * Layout (top → bottom):
+ *  1. Section eyebrow + clip-path title reveal
+ *  2. Filter tabs (All | AI/ML | Frontend | Backend | Tools)
+ *  3. Icon Cloud  — 3D sphere, icons filtered by active tab
+ *  4. Marquee rows — skill badges scrolling left/right, opacity controlled by filter
+ *
+ * Animation:
+ *  - GSAP ScrollTrigger: eyebrow fades up, title clip-path wipes left→right
+ *  - Icon Cloud: scales 0.8→1 + opacity 0→1 with spring after title entrance
+ *  - Marquee: staggered fade-in after cloud entrance
  */
 
-import { useState, useRef, useEffect, useCallback } from "react";
-import { skills, CATEGORIES, type Category } from "./data";
-import FruitCard from "./FruitCard";
+import { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { CATEGORIES, getCloudSlugs, type Category } from "@/lib/skills-data";
+import IconCloud from "./IconCloud";
+import SkillMarquee from "./SkillMarquee";
 
 gsap.registerPlugin(ScrollTrigger);
 
 export default function SkillsSection() {
   const [activeCategory, setActiveCategory] = useState<Category>("all");
-  const [visibleCards, setVisibleCards] = useState(false);
-  const [isFiltering, setIsFiltering] = useState(false);
-  const [pendingCategory, setPendingCategory] = useState<Category | null>(null);
 
   // Refs for GSAP targets
-  const sectionRef    = useRef<HTMLElement>(null);
-  const eyebrowRef    = useRef<HTMLParagraphElement>(null);
-  const headingRef    = useRef<HTMLHeadingElement>(null);
-  const ghostRef      = useRef<HTMLSpanElement>(null);
-  const tabsRef       = useRef<HTMLDivElement>(null);
-  const gridRef       = useRef<HTMLDivElement>(null);
+  const sectionRef  = useRef<HTMLElement>(null);
+  const eyebrowRef  = useRef<HTMLParagraphElement>(null);
+  const titleRef    = useRef<HTMLHeadingElement>(null);
+  const tabsRef     = useRef<HTMLDivElement>(null);
+  const cloudRef    = useRef<HTMLDivElement>(null);
+  const marqueeRef  = useRef<HTMLDivElement>(null);
+  const ghostRef    = useRef<HTMLSpanElement>(null);
 
-  // Filtered skill list
-  const filtered = skills.filter(
-    (s) => activeCategory === "all" || s.category === activeCategory
-  );
-
-  // ── GSAP scroll-triggered entrance ──────────────────────────
+  // ── GSAP entrance (ScrollTrigger — fires once) ──────────────
   useEffect(() => {
     if (!sectionRef.current) return;
 
@@ -52,98 +46,76 @@ export default function SkillsSection() {
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: "top 75%",
+          start: "top 70%",
           once: true,
         },
+        defaults: { ease: "power3.out" },
       });
 
+      // Ghost bg text drifts in from right
       tl.fromTo(ghostRef.current,
-        { opacity: 0, x: 60 },
-        { opacity: 1, x: 0, duration: 1.2, ease: "power3.out" },
+        { opacity: 0, x: 80 },
+        { opacity: 1, x: 0, duration: 1.4 },
         0
       )
+      // Eyebrow fades up
       .fromTo(eyebrowRef.current,
-        { opacity: 0, y: -20 },
-        { opacity: 1, y: 0, duration: 0.7, ease: "power2.out" },
+        { opacity: 0, y: -16 },
+        { opacity: 1, y: 0, duration: 0.6 },
         0.2
       )
-      .fromTo(headingRef.current,
-        { opacity: 0, y: 30 },
-        { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" },
-        0.3
+      // Title: clip-path wipes left→right (mask-reveal)
+      .fromTo(titleRef.current,
+        { clipPath: "inset(0 100% 0 0)", opacity: 1 },
+        { clipPath: "inset(0 0% 0 0)", duration: 0.9 },
+        0.45
       )
+      // Filter tabs slide up
       .fromTo(tabsRef.current,
         { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, duration: 0.6, ease: "power2.out" },
-        0.55
+        { opacity: 1, y: 0, duration: 0.6 },
+        0.8
+      )
+      // Icon cloud scales in from 0.8 with spring feel
+      .fromTo(cloudRef.current,
+        { opacity: 0, scale: 0.82 },
+        { opacity: 1, scale: 1, duration: 0.9, ease: "back.out(1.4)" },
+        1.0
+      )
+      // Marquee rows stagger in
+      .fromTo(marqueeRef.current,
+        { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration: 0.7 },
+        1.3
       );
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
 
-  // ── Card visibility via IntersectionObserver ─────────────────
-  useEffect(() => {
-    if (!gridRef.current) return;
-    const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) setVisibleCards(true); },
-      { threshold: 0.1 }
-    );
-    obs.observe(gridRef.current);
-    return () => obs.disconnect();
-  }, []);
-
-  // ── Filter tab switch with exit/entry animation ───────────────
-  const handleFilter = useCallback((cat: Category) => {
-    if (cat === activeCategory || isFiltering) return;
-    setIsFiltering(true);
-    setPendingCategory(cat);
-
-    // Exit: shrink + fade cards
-    if (gridRef.current) {
-      gsap.to(gridRef.current.querySelectorAll(".fruit-card-wrap"), {
-        scale: 0.92,
-        opacity: 0,
-        duration: 0.2,
-        stagger: 0.03,
-        ease: "power1.in",
-        onComplete: () => {
-          setActiveCategory(cat);
-          setPendingCategory(null);
-          setIsFiltering(false);
-          // Reset — entry animation will trigger via visibleCards flag
-          setTimeout(() => {
-            if (gridRef.current) {
-              gsap.set(gridRef.current.querySelectorAll(".fruit-card-wrap"), {
-                scale: 1, opacity: 1,
-              });
-            }
-          }, 50);
-        },
-      });
-    }
-  }, [activeCategory, isFiltering]);
+  // Derived icon slugs for the current category filter
+  const cloudSlugs = getCloudSlugs(activeCategory);
 
   return (
     <section
       id="skills"
       ref={sectionRef}
-      className="relative w-full bg-bg-warm overflow-hidden"
+      className="relative w-full bg-bg-section overflow-hidden"
       style={{ padding: "clamp(5rem, 10vw, 8rem) 0" }}
     >
       {/* ── Ghost background text ─────────────────────────────── */}
       <span
         ref={ghostRef}
         style={{ opacity: 0 }}
-        className="absolute right-[-2vw] top-1/2 -translate-y-1/2 font-cinzel font-bold text-[18vw] leading-none text-parchment/[0.03] pointer-events-none select-none z-0 whitespace-nowrap"
+        className="absolute right-[-2vw] top-[10%] font-cinzel font-bold text-[18vw] leading-none text-parchment/[0.025] pointer-events-none select-none z-0 whitespace-nowrap"
       >
         ABILITIES
       </span>
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 md:px-10">
 
-        {/* ── Section header ────────────────────────────────────── */}
-        <div className="mb-12 md:mb-16">
+        {/* ── Header ────────────────────────────────────────────── */}
+        <div className="mb-10">
           <p
             ref={eyebrowRef}
             style={{ opacity: 0 }}
@@ -151,10 +123,11 @@ export default function SkillsSection() {
           >
             Devil Fruit Encyclopedia
           </p>
+          {/* clip-path starts at inset(0 100% 0 0) — fully hidden right */}
           <h2
-            ref={headingRef}
-            style={{ opacity: 0 }}
+            ref={titleRef}
             className="font-cinzel text-3xl md:text-4xl lg:text-5xl text-parchment font-bold tracking-tight"
+            style={{ clipPath: "inset(0 100% 0 0)" }}
           >
             Awakened Abilities
           </h2>
@@ -164,44 +137,92 @@ export default function SkillsSection() {
         <div
           ref={tabsRef}
           style={{ opacity: 0 }}
-          className="flex flex-wrap gap-2 mb-10 md:mb-14"
+          className="flex flex-wrap gap-2 mb-10"
         >
-          {CATEGORIES.map(({ key, label }) => {
-            const isActive = activeCategory === key || pendingCategory === key;
-            return (
-              <button
-                key={key}
-                onClick={() => handleFilter(key)}
-                className={[
-                  "px-4 py-2 text-[10px] font-inter uppercase tracking-widest border transition-all duration-300",
-                  isActive
-                    ? "bg-gold text-bg-base border-gold"
-                    : "text-parchment/50 border-parchment/15 hover:border-gold/50 hover:text-gold/80",
-                ].join(" ")}
-              >
-                {label}
-              </button>
-            );
-          })}
+          {CATEGORIES.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setActiveCategory(key)}
+              className={[
+                "px-4 py-1.5 text-[10px] font-inter uppercase tracking-widest border transition-all duration-300",
+                activeCategory === key
+                  ? "bg-gold text-bg-base border-gold"
+                  : "text-parchment/40 border-parchment/12 hover:border-gold/40 hover:text-gold/70",
+              ].join(" ")}
+            >
+              {label}
+            </button>
+          ))}
         </div>
 
-        {/* ── Card grid ─────────────────────────────────────────── */}
-        <div
-          ref={gridRef}
-          className="grid gap-3"
-          style={{
-            gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))",
-          }}
-        >
-          {filtered.map((skill, i) => (
-            <div key={skill.id} className="fruit-card-wrap">
-              <FruitCard
-                skill={skill}
-                entryDelay={i * 60}
-                isVisible={visibleCards}
-              />
+        {/* ── Two-column layout on lg+: Cloud left, marquee right ─ */}
+        {/* On mobile: cloud stacked above marquee */}
+        <div className="flex flex-col lg:flex-row gap-10 lg:gap-12 items-center lg:items-start">
+
+          {/* Icon Cloud — left column (lg), full width on mobile */}
+          <div
+            ref={cloudRef}
+            style={{ opacity: 0 }}
+            className="w-full lg:w-[42%] shrink-0"
+          >
+            <IconCloud slugs={cloudSlugs} />
+
+            {/* Active category label beneath cloud */}
+            <p className="text-center text-[9px] font-inter uppercase tracking-[0.3em] text-parchment/25 mt-3">
+              {activeCategory === "all"
+                ? "Full Stack Arsenal"
+                : CATEGORIES.find((c) => c.key === activeCategory)?.label}
+            </p>
+          </div>
+
+          {/* Marquee rows — right column (lg), full width on mobile */}
+          <div
+            ref={marqueeRef}
+            style={{ opacity: 0 }}
+            className="w-full lg:flex-1 flex flex-col justify-center gap-4"
+          >
+            {/* Category legend */}
+            <div className="flex flex-wrap gap-4 mb-2 px-1">
+              {(["ai-ml", "frontend", "backend", "tools"] as const).map((cat) => {
+                const colors: Record<string, string> = {
+                  "ai-ml":   "#378ADD",
+                  frontend:  "#E24B4A",
+                  backend:   "#5DCAA5",
+                  tools:     "#9CA3AF",
+                };
+                const labels: Record<string, string> = {
+                  "ai-ml":  "AI / ML",
+                  frontend: "Frontend",
+                  backend:  "Backend",
+                  tools:    "Tools",
+                };
+                const isActive = activeCategory === "all" || activeCategory === cat;
+                return (
+                  <span
+                    key={cat}
+                    className="inline-flex items-center gap-1.5 text-[9px] font-inter uppercase tracking-widest"
+                    style={{
+                      color: isActive ? "rgba(232,223,192,0.5)" : "rgba(232,223,192,0.15)",
+                      transition: "color 0.4s ease",
+                    }}
+                  >
+                    <span
+                      className="w-1.5 h-1.5 rounded-full inline-block"
+                      style={{
+                        backgroundColor: colors[cat],
+                        opacity: isActive ? 1 : 0.2,
+                        transition: "opacity 0.4s ease",
+                      }}
+                    />
+                    {labels[cat]}
+                  </span>
+                );
+              })}
             </div>
-          ))}
+
+            {/* The three scrolling marquee rows */}
+            <SkillMarquee activeCategory={activeCategory} />
+          </div>
         </div>
 
         {/* ── Section bottom rule ───────────────────────────────── */}
