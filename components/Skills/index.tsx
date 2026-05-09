@@ -187,7 +187,6 @@ export default function SkillsSection() {
 
         {/* ── Section bottom rule ───────────────────────────────── */}
         <div className="mt-16 h-[1px] bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
-      </div>
     </section>
   );
 }
