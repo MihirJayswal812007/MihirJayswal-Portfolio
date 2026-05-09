@@ -3,136 +3,69 @@
 /**
  * components/Skills/SkillMarquee.tsx
  *
- * Three infinite-scrolling marquee rows of skill badge pills.
- * Row 1: AI/ML     — scrolls left,  normal speed
- * Row 2: Frontend  — scrolls right, slow
- * Row 3: Backend + Tools — scrolls left, fast
- *
- * Filter behaviour: badges matching the active category are full opacity
- * with a gold border; non-matching badges dim to 15% opacity.
+ * 3D Marquee of Skill Cards, tilted in perspective.
  */
 
-import { type Category, skills } from "@/lib/skills-data";
+import { type Category, skills, Skill } from "@/lib/skills-data";
+import { cn } from "@/lib/utils";
+import { Marquee } from "@/components/ui/marquee";
 
-// ── Category dot colours (hex — unavoidable for inline style) ─────────────────
-const DOT_COLORS: Record<Exclude<Category, "all">, string> = {
-  "ai-ml":    "#378ADD", // avatar-blue
-  frontend:   "#E24B4A", // luffy-red
-  backend:    "#5DCAA5", // teal (not in Tailwind tokens — spec-defined)
-  tools:      "#9CA3AF", // dim
-};
+// Split the skills into 4 columns for the 3D marquee
+const col1 = skills.slice(0, 5);
+const col2 = skills.slice(5, 10);
+const col3 = skills.slice(10, 14);
+const col4 = skills.slice(14, 18);
 
-// ── Row configuration ─────────────────────────────────────────────────────────
-const ROWS = [
-  {
-    id: "row-aiml",
-    categories: ["ai-ml"] as Exclude<Category, "all">[],
-    direction: "left" as const,
-    duration: 28,  // seconds for one full loop
-  },
-  {
-    id: "row-frontend",
-    categories: ["frontend"] as Exclude<Category, "all">[],
-    direction: "right" as const,
-    duration: 38,  // slower
-  },
-  {
-    id: "row-backend-tools",
-    categories: ["backend", "tools"] as Exclude<Category, "all">[],
-    direction: "left" as const,
-    duration: 20,  // faster
-  },
-];
-
-// ── Badge component ───────────────────────────────────────────────────────────
-
-interface BadgeProps {
-  name: string;
-  category: Exclude<Category, "all">;
+interface SkillCardProps {
+  skill: Skill;
   activeCategory: Category;
 }
 
-function Badge({ name, category, activeCategory }: BadgeProps) {
-  // Determine if this badge is "highlighted" by the active filter
-  const isActive = activeCategory === "all" || activeCategory === category;
-  const dotColor = DOT_COLORS[category];
+const SkillCard = ({ skill, activeCategory }: SkillCardProps) => {
+  const isActive = activeCategory === "all" || activeCategory === skill.category;
+  const dotColor = skill.colorHex;
 
   return (
-    <span
-      className="inline-flex items-center gap-2 mx-2 px-4 py-2 rounded-full font-inter text-[11px] uppercase tracking-[0.12em] shrink-0 select-none whitespace-nowrap"
-      style={{
-        // Badge container: always dark pill, border fades in when active
-        backgroundColor: "rgba(17,24,39,0.8)",  // bg-section-ish with slight transparency
-        border: isActive
-          ? "0.5px solid rgba(200,168,75,0.5)"  // gold border when active
-          : "0.5px solid rgba(200,168,75,0.1)", // barely-there border when dimmed
-        color: isActive ? "rgba(232,223,192,0.85)" : "rgba(232,223,192,0.15)",
-        // Smooth opacity transition on filter change
-        transition: "color 0.4s ease, border-color 0.4s ease, opacity 0.4s ease",
-      }}
+    <figure
+      className={cn(
+        "relative h-fit w-40 cursor-pointer overflow-hidden rounded-xl border p-4 backdrop-blur-md transition-all duration-700",
+        isActive 
+          ? "border-[#C8A84B]/30 bg-black/60 shadow-[0_0_20px_rgba(200,168,75,0.15)]" 
+          : "border-white/5 bg-white/5 opacity-30 scale-95 saturate-0"
+      )}
     >
-      {/* Category colour dot */}
-      <span
-        className="inline-block w-1.5 h-1.5 rounded-full shrink-0"
-        style={{
-          backgroundColor: dotColor,
-          opacity: isActive ? 1 : 0.2,
-          transition: "opacity 0.4s ease",
-          boxShadow: isActive ? `0 0 4px ${dotColor}88` : "none",
-        }}
-      />
-      {name}
-    </span>
-  );
-}
-
-// ── Marquee row component ─────────────────────────────────────────────────────
-
-interface MarqueeRowProps {
-  rowSkills: typeof skills;
-  direction: "left" | "right";
-  duration: number;
-  activeCategory: Category;
-  /** Pause scrolling on hover */
-  paused?: boolean;
-}
-
-function MarqueeRow({ rowSkills, direction, duration, activeCategory, paused }: MarqueeRowProps) {
-  // Duplicate items twice so the infinite scroll is seamless
-  const doubled = [...rowSkills, ...rowSkills];
-
-  return (
-    <div
-      className="relative w-full overflow-hidden"
-      /* Fade edges with mask for seamless look */
-      style={{
-        maskImage: "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
-        WebkitMaskImage: "linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%)",
-      }}
-    >
-      <div
-        className="flex"
-        style={{
-          /* Direction: left = translateX(0→-50%), right = translateX(-50%→0%) */
-          animation: `marquee-${direction} ${duration}s linear infinite`,
-          animationPlayState: paused ? "paused" : "running",
-          width: "max-content",
-        }}
-      >
-        {doubled.map((skill, i) => (
-          <Badge
-            key={`${skill.id}-${i}`}
-            name={skill.name}
-            category={skill.category as Exclude<Category, "all">}
-            activeCategory={activeCategory}
-          />
-        ))}
+      <div className="flex flex-row items-center gap-3">
+        <span 
+          className="text-2xl filter drop-shadow-xl"
+          style={{ textShadow: isActive ? `0 0 10px ${dotColor}80` : "none" }}
+        >
+          {skill.emoji}
+        </span>
+        <div className="flex flex-col">
+          <figcaption className="text-xs font-cinzel text-parchment font-medium tracking-wide">
+            {skill.name}
+          </figcaption>
+          <p className="text-[9px] uppercase tracking-wider font-inter text-[#C8A84B]/70 mt-0.5">
+            {skill.category.replace("-", " ")}
+          </p>
+        </div>
       </div>
-    </div>
+      <div className="mt-4 flex items-center justify-between gap-2">
+        <div className="h-1 flex-1 bg-white/10 rounded-full overflow-hidden">
+          <div 
+            className="h-full rounded-full transition-all duration-1000" 
+            style={{ 
+              width: `${skill.level}%`, 
+              backgroundColor: dotColor,
+              boxShadow: isActive ? `0 0 8px ${dotColor}` : "none"
+            }} 
+          />
+        </div>
+        <span className="text-[8px] font-inter text-dim">{skill.level}%</span>
+      </div>
+    </figure>
   );
-}
-
-// ── Main export ───────────────────────────────────────────────────────────────
+};
 
 interface SkillMarqueeProps {
   activeCategory: Category;
@@ -140,24 +73,44 @@ interface SkillMarqueeProps {
 
 export default function SkillMarquee({ activeCategory }: SkillMarqueeProps) {
   return (
-    <div className="flex flex-col gap-4 w-full group">
-      {ROWS.map((row) => {
-        // Filter skills to those belonging to this row's categories
-        const rowSkills = skills.filter((s) =>
-          (row.categories as string[]).includes(s.category)
-        );
+    <div className="relative flex h-[500px] w-full flex-row items-center justify-center gap-4 overflow-hidden [perspective:300px]">
+      <div
+        className="flex flex-row items-center gap-4"
+        style={{
+          transform:
+            "translateX(-50px) translateY(0px) translateZ(-50px) rotateX(20deg) rotateY(-10deg) rotateZ(20deg)",
+        }}
+      >
+        <Marquee pauseOnHover vertical className="[--duration:25s]">
+          {col1.map((skill) => (
+            <SkillCard key={skill.id} skill={skill} activeCategory={activeCategory} />
+          ))}
+        </Marquee>
+        
+        <Marquee reverse pauseOnHover vertical className="[--duration:30s]">
+          {col2.map((skill) => (
+            <SkillCard key={skill.id} skill={skill} activeCategory={activeCategory} />
+          ))}
+        </Marquee>
+        
+        <Marquee reverse pauseOnHover vertical className="[--duration:20s]">
+          {col3.map((skill) => (
+            <SkillCard key={skill.id} skill={skill} activeCategory={activeCategory} />
+          ))}
+        </Marquee>
+        
+        <Marquee pauseOnHover vertical className="[--duration:28s]">
+          {col4.map((skill) => (
+            <SkillCard key={skill.id} skill={skill} activeCategory={activeCategory} />
+          ))}
+        </Marquee>
+      </div>
 
-        return (
-          <MarqueeRow
-            key={row.id}
-            rowSkills={rowSkills}
-            direction={row.direction}
-            duration={row.duration}
-            activeCategory={activeCategory}
-            paused={false} // individual rows never pause; section container handles hover
-          />
-        );
-      })}
+      {/* Fade edges to black for seamless transition into background */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-[#0A0A0A] to-transparent"></div>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-[#0A0A0A] to-transparent"></div>
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-[#0A0A0A] to-transparent"></div>
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-[#0A0A0A] to-transparent"></div>
     </div>
   );
 }
