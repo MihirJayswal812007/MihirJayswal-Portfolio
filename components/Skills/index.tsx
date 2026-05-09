@@ -155,75 +155,35 @@ export default function SkillsSection() {
           ))}
         </div>
 
-        {/* ── Two-column layout on lg+: Cloud left, marquee right ─ */}
-        {/* On mobile: cloud stacked above marquee */}
-        <div className="flex flex-col lg:flex-row gap-10 lg:gap-12 items-center lg:items-start">
+        {/* ── Single-column vertical layout ─ */}
+        <div className="flex flex-col items-center gap-16">
 
-          {/* Icon Cloud — left column (lg), full width on mobile */}
+          {/* Icon Cloud — Centered Hero */}
           <div
             ref={cloudRef}
             style={{ opacity: 0 }}
-            className="w-full lg:w-[42%] shrink-0"
+            className="w-full max-w-2xl mx-auto flex flex-col items-center"
           >
             <IconCloud slugs={cloudSlugs} />
 
             {/* Active category label beneath cloud */}
-            <p className="text-center text-[9px] font-inter uppercase tracking-[0.3em] text-parchment/25 mt-3">
+            <p className="text-center text-[10px] font-inter uppercase tracking-[0.4em] text-parchment/30 mt-6">
               {activeCategory === "all"
                 ? "Full Stack Arsenal"
                 : CATEGORIES.find((c) => c.key === activeCategory)?.label}
             </p>
           </div>
-
-          {/* Marquee rows — right column (lg), full width on mobile */}
-          <div
-            ref={marqueeRef}
-            style={{ opacity: 0 }}
-            className="w-full lg:flex-1 flex flex-col justify-center gap-4"
-          >
-            {/* Category legend */}
-            <div className="flex flex-wrap gap-4 mb-2 px-1">
-              {(["ai-ml", "frontend", "backend", "tools"] as const).map((cat) => {
-                const colors: Record<string, string> = {
-                  "ai-ml":   "#378ADD",
-                  frontend:  "#E24B4A",
-                  backend:   "#5DCAA5",
-                  tools:     "#9CA3AF",
-                };
-                const labels: Record<string, string> = {
-                  "ai-ml":  "AI / ML",
-                  frontend: "Frontend",
-                  backend:  "Backend",
-                  tools:    "Tools",
-                };
-                const isActive = activeCategory === "all" || activeCategory === cat;
-                return (
-                  <span
-                    key={cat}
-                    className="inline-flex items-center gap-1.5 text-[9px] font-inter uppercase tracking-widest"
-                    style={{
-                      color: isActive ? "rgba(232,223,192,0.5)" : "rgba(232,223,192,0.15)",
-                      transition: "color 0.4s ease",
-                    }}
-                  >
-                    <span
-                      className="w-1.5 h-1.5 rounded-full inline-block"
-                      style={{
-                        backgroundColor: colors[cat],
-                        opacity: isActive ? 1 : 0.2,
-                        transition: "opacity 0.4s ease",
-                      }}
-                    />
-                    {labels[cat]}
-                  </span>
-                );
-              })}
-            </div>
-
-            {/* The three scrolling marquee rows */}
-            <SkillMarquee activeCategory={activeCategory} />
-          </div>
         </div>
+      </div>
+      
+      {/* Marquee rows — Full width bleed below the container */}
+      <div
+        ref={marqueeRef}
+        style={{ opacity: 0 }}
+        className="w-full flex flex-col justify-center gap-4 mt-20 relative"
+      >
+        <SkillMarquee activeCategory={activeCategory} />
+      </div>
 
         {/* ── Section bottom rule ───────────────────────────────── */}
         <div className="mt-16 h-[1px] bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
