@@ -1,101 +1,90 @@
 "use client";
 
 import React from "react";
-import { type Category, skills } from "@/lib/skills-data";
+import { type Category, skills, Skill } from "@/lib/skills-data";
 import { cn } from "@/lib/utils";
 import { Marquee } from "@/components/ui/marquee";
 
-// Split the skills into rows
-const row1 = skills.slice(0, 6);
-const row2 = skills.slice(6, 12);
-const row3 = skills.slice(12, 18);
+// Split the 18 skills into 4 columns for vertical scrolling
+const col1 = skills.slice(0, 5);
+const col2 = skills.slice(5, 10);
+const col3 = skills.slice(10, 14);
+const col4 = skills.slice(14, 18);
 
-interface TypographyItemProps {
-  name: string;
-  category: string;
-  colorHex: string;
-  isActive: boolean;
-}
-
-const TypographyItem = ({ name, colorHex, isActive }: TypographyItemProps) => {
+const SkillCard = ({ skill, activeCategory }: { skill: Skill; activeCategory: Category }) => {
+  const isActive = activeCategory === "all" || activeCategory === skill.category;
+  
   return (
-    <div 
+    <figure
       className={cn(
-        "flex items-center gap-6 md:gap-12 mx-4 md:mx-8 transition-all duration-700",
-        isActive ? "opacity-100" : "opacity-20 blur-[1px]"
+        "relative w-32 sm:w-40 cursor-pointer overflow-hidden rounded-2xl border p-4 sm:p-5 transition-all duration-500 backdrop-blur-md mb-4",
+        isActive 
+          ? "border-white/10 bg-white/5 shadow-[0_0_30px_rgba(255,255,255,0.03)]" 
+          : "border-transparent bg-transparent opacity-20 scale-95"
       )}
     >
-      <span 
-        className="text-5xl md:text-7xl lg:text-8xl font-cinzel font-black tracking-widest uppercase whitespace-nowrap"
-        style={{ 
-          color: isActive ? "transparent" : "rgba(255,255,255,0.05)",
-          WebkitTextStroke: isActive ? `1px ${colorHex}` : "none",
-          textShadow: isActive ? `0 0 40px ${colorHex}50` : "none"
-        }}
-      >
-        {name}
-      </span>
-      <span 
-        className="text-3xl md:text-5xl"
-        style={{ color: isActive ? colorHex : "rgba(255,255,255,0.05)", opacity: isActive ? 0.8 : 0.2 }}
-      >
-        ✦
-      </span>
-    </div>
+      <div className="flex flex-col items-center justify-center gap-3 text-center">
+        <span 
+          className="text-4xl sm:text-5xl filter drop-shadow-xl transition-all duration-500"
+          style={{ textShadow: isActive ? `0 0 20px ${skill.colorHex}60` : "none" }}
+        >
+          {skill.emoji}
+        </span>
+        <div className="flex flex-col">
+          <figcaption className="text-xs sm:text-sm font-cinzel text-parchment font-semibold tracking-wider">
+            {skill.name}
+          </figcaption>
+          <p className="text-[9px] uppercase tracking-widest font-inter text-parchment/40 mt-1">
+            {skill.category.replace("-", " ")}
+          </p>
+        </div>
+      </div>
+    </figure>
   );
 };
 
 export default function SkillMarquee({ activeCategory }: { activeCategory: Category }) {
   return (
-    <div className="relative flex flex-col w-full overflow-hidden py-10 md:py-20 [perspective:1000px]">
+    <div className="relative flex h-[500px] lg:h-[600px] w-full flex-row items-center justify-center overflow-hidden [perspective:800px] rounded-3xl">
       
-      <div 
-        className="flex flex-col gap-8 md:gap-12 w-full"
+      {/* 3D Container */}
+      <div
+        className="flex flex-row items-center gap-4 sm:gap-6 w-full justify-center"
         style={{
-          transform: "rotateX(15deg) rotateY(-5deg) rotateZ(2deg)",
-          transformStyle: "preserve-3d"
+          transform: "rotateX(15deg) rotateY(-10deg) rotateZ(5deg) scale(1.1)",
+          transformStyle: "preserve-3d",
         }}
       >
-        <Marquee pauseOnHover style={{ "--duration": "40s" } as React.CSSProperties}>
-          {row1.map((skill) => (
-            <TypographyItem 
-              key={skill.id} 
-              name={skill.name} 
-              category={skill.category}
-              colorHex={skill.colorHex}
-              isActive={activeCategory === "all" || activeCategory === skill.category} 
-            />
+        <Marquee pauseOnHover vertical style={{ "--duration": "30s" } as React.CSSProperties}>
+          {col1.map((skill) => (
+            <SkillCard key={skill.id} skill={skill} activeCategory={activeCategory} />
+          ))}
+        </Marquee>
+        
+        <Marquee reverse pauseOnHover vertical style={{ "--duration": "40s" } as React.CSSProperties}>
+          {col2.map((skill) => (
+            <SkillCard key={skill.id} skill={skill} activeCategory={activeCategory} />
+          ))}
+        </Marquee>
+        
+        <Marquee pauseOnHover vertical style={{ "--duration": "35s" } as React.CSSProperties}>
+          {col3.map((skill) => (
+            <SkillCard key={skill.id} skill={skill} activeCategory={activeCategory} />
           ))}
         </Marquee>
 
-        <Marquee reverse pauseOnHover style={{ "--duration": "50s" } as React.CSSProperties}>
-          {row2.map((skill) => (
-            <TypographyItem 
-              key={skill.id} 
-              name={skill.name} 
-              category={skill.category}
-              colorHex={skill.colorHex}
-              isActive={activeCategory === "all" || activeCategory === skill.category} 
-            />
-          ))}
-        </Marquee>
-
-        <Marquee pauseOnHover style={{ "--duration": "45s" } as React.CSSProperties}>
-          {row3.map((skill) => (
-            <TypographyItem 
-              key={skill.id} 
-              name={skill.name} 
-              category={skill.category}
-              colorHex={skill.colorHex}
-              isActive={activeCategory === "all" || activeCategory === skill.category} 
-            />
+        <Marquee reverse pauseOnHover vertical style={{ "--duration": "45s" } as React.CSSProperties}>
+          {col4.map((skill) => (
+            <SkillCard key={skill.id} skill={skill} activeCategory={activeCategory} />
           ))}
         </Marquee>
       </div>
 
-      {/* Cinematic Edge Fades */}
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-bg-section to-transparent z-10"></div>
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-bg-section to-transparent z-10"></div>
+      {/* Cinematic Fades - Placed outside the 3D transform to avoid glitching */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-1/4 bg-gradient-to-b from-[#0A0A0A] to-transparent z-10" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-[#0A0A0A] to-transparent z-10" />
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-[#0A0A0A] to-transparent z-10" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-[#0A0A0A] to-transparent z-10" />
     </div>
   );
 }
