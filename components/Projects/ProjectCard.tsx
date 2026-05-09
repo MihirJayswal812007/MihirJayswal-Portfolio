@@ -1,8 +1,8 @@
 "use client";
 
-import { motion, useTransform, MotionValue, useMotionValueEvent } from "framer-motion";
+import { useTransform, MotionValue, useMotionValueEvent } from "framer-motion";
 import { Project } from "@/lib/projects-data";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
@@ -53,16 +53,24 @@ export function ProjectCard({
 
   const isEven = index % 2 !== 0; // index is 0-based, so 0 is odd in appearance? Actually 0 is 1st card.
   
-  // Teaser logic
   const isTeaser = project.isTeaser;
 
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Manually apply scroll transforms to bypass Framer Motion's WAAPI generator,
+  // which crashes if inputRange values (like -0.2) get clamped into duplicate offsets.
+  useMotionValueEvent(progress, "change", () => {
+    if (cardRef.current) {
+      cardRef.current.style.transform = `translateY(${y.get()}px) scale(${scale.get()})`;
+      cardRef.current.style.opacity = `${opacity.get()}`;
+      cardRef.current.style.borderColor = borderColor.get();
+    }
+  });
+
   return (
-    <motion.div
+    <div
+      ref={cardRef}
       style={{
-        y,
-        scale,
-        opacity,
-        borderColor,
         zIndex: total - index, // earlier cards have lower z-index so later ones stack on top
       }}
       className={`absolute top-0 left-0 w-full rounded-xl overflow-hidden border-[0.5px] shadow-2xl backdrop-blur-sm
@@ -162,7 +170,7 @@ export function ProjectCard({
           <div className="absolute inset-0 pointer-events-none opacity-[0.03] mix-blend-overlay z-20" style={{ backgroundImage: 'url(/noise.png)' }}></div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
