@@ -1,25 +1,57 @@
 "use client";
 
-import { useRef } from "react";
-import { motion, useScroll } from "framer-motion";
+import { useRef, useState, useEffect } from "react";
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { motion } from "framer-motion";
+import { entry } from "@/lib/animations";
 import { projects } from "@/lib/projects-data";
 import { ProjectCard } from "./ProjectCard";
-import { entry } from "@/lib/animations";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
+import { CardStack, CardStackItem } from "@/components/ui/card-stack";
+import { Project } from "@/lib/projects-data";
 
-gsap.registerPlugin(ScrollTrigger);
+// Register GSAP plugins
+if (typeof window !== "undefined") {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
+// Extend CardStackItem to include our custom Project data
+type ProjectStackItem = CardStackItem & {
+  project: Project;
+  index: number;
+};
 
 export default function ProjectsSection() {
-  const containerRef = useRef<HTMLElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 480 });
 
-  // Scroll mechanic for the stack
-  const { scrollYProgress } = useScroll({
-    target: containerRef,
-    offset: ["start start", "end end"],
-  });
+  // Handle responsive card dimensions since CardStack uses fixed pixel sizes
+  useEffect(() => {
+    const updateDimensions = () => {
+      const w = window.innerWidth;
+      if (w < 640) {
+        setDimensions({ width: w - 40, height: 400 });
+      } else if (w < 1024) {
+        setDimensions({ width: 600, height: 400 });
+      } else {
+        setDimensions({ width: 800, height: 480 });
+      }
+    };
+    
+    updateDimensions();
+    window.addEventListener("resize", updateDimensions);
+    return () => window.removeEventListener("resize", updateDimensions);
+  }, []);
+
+  // Map our data to the CardStackItem format
+  const stackItems: ProjectStackItem[] = projects.map((p, i) => ({
+    id: p.id,
+    title: p.title, // required by CardStackItem
+    project: p,
+    index: i,
+  }));
 
   // Section entry animations
   useGSAP(() => {
@@ -43,67 +75,76 @@ export default function ProjectsSection() {
 
   return (
     <section 
-      ref={containerRef} 
-      className="relative w-full z-10 px-6 md:px-12 lg:px-24"
-      // Section height = cards * 600px to give plenty of scrolling room
-      style={{ height: `${projects.length * 600}px` }}
+      ref={containerRef}
+      id="projects" 
+      className="relative min-h-screen py-32 overflow-hidden flex flex-col items-center"
     >
-      <div className="sticky top-[80px] w-full max-w-5xl mx-auto flex flex-col pt-12">
-        {/* Section Header */}
-        <div className="mb-12">
-          <motion.p
-            variants={entry}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            className="eyebrow mb-4"
-          >
-            CHAPTER SELECT
-          </motion.p>
-          <h2
-            ref={titleRef}
-            className="font-cinzel text-4xl md:text-5xl lg:text-6xl text-parchment leading-tight tracking-wide"
-            style={{ clipPath: "polygon(0 0, 0 0, 0 100%, 0 100%)" }}
-          >
-            FEATURED WORKS
-          </h2>
-        </div>
-
-        {/* Cards Stack Container */}
-        <div className="relative w-full h-[480px]">
-          {projects.map((project, index) => {
-            const card = (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                index={index}
-                total={projects.length}
-                progress={scrollYProgress}
-              />
-            );
-
-            // First card entry animation
-            if (index === 0) {
-              return (
-                <motion.div
-                  key={project.id}
-                  className="absolute inset-0 z-50 pointer-events-none"
-                  initial={{ y: 60, opacity: 0 }}
-                  whileInView={{ y: 0, opacity: 1 }}
-                  transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-                  viewport={{ once: true, margin: "-100px" }}
-                >
-                  <div className="relative w-full h-full pointer-events-auto">
-                    {card}
-                  </div>
-                </motion.div>
-              );
-            }
-
-            return card;
-          })}
-        </div>
+      {/* Background grain */}
+      <div className="absolute inset-0 pointer-events-none opacity-[0.02] mix-blend-overlay z-0" style={{ backgroundImage: 'url(/noise.png)' }}></div>
+      
+      {/* Section Header */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 mb-16 flex flex-col items-center text-center">
+        <motion.p
+          variants={entry}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="eyebrow mb-4"
+        >
+          CHAPTER SELECT
+        </motion.p>
+        
+        <h2 
+          ref={titleRef}
+          className="font-cinzel text-4xl md:text-6xl lg:text-7xl text-parchment leading-tight tracking-wider"
+          style={{ clipPath: "polygon(0 0, 0 0, 0 100%, 0 100%)" }}
+        >
+          FEATURED WORKS
+        </h2>
       </div>
+
+      {/* Card Stack Interactive Component */}
+      <div className="w-full max-w-6xl mx-auto px-4 mt-8">
+        <motion.div
+          variants={entry}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: "-100px" }}
+          className="w-full flex justify-center"
+        >
+          <CardStack
+            items={stackItems}
+            cardWidth={dimensions.width}
+            cardHeight={dimensions.height}
+            initialIndex={0}
+            autoAdvance={false}
+            showDots={true}
+            overlap={0.48}
+            spreadDeg={48}
+            tiltXDeg={12}
+            activeScale={1.03}
+            inactiveScale={0.94}
+            renderCard={(item, { active }) => (
+              <ProjectCard 
+                project={(item as ProjectStackItem).project} 
+                index={(item as ProjectStackItem).index} 
+                isActive={active} 
+              />
+            )}
+          />
+        </motion.div>
+      </div>
+
+      {/* Helper text */}
+      <motion.p
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        transition={{ delay: 0.8 }}
+        viewport={{ once: true }}
+        className="mt-12 text-dim text-[11px] uppercase tracking-widest font-inter"
+      >
+        Drag or swipe to navigate chapters
+      </motion.p>
     </section>
   );
 }
