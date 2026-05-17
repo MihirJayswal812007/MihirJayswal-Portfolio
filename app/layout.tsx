@@ -83,7 +83,7 @@ export default function RootLayout({
     <html
       lang="en"
       // Prevent FOUC — dark background set inline before CSS loads
-      style={{ background: "#02020A" }}
+      style={{ background: "#07070F" }}
     >
       <body
         className={`
@@ -96,6 +96,9 @@ export default function RootLayout({
           overflow-x-hidden
         `}
       >
+        {/* Global grain overlay — sits at z-0, behind all section content (z-10+) */}
+        {/* Applied once at root so every section shares the same texture DNA */}
+        <div className="grain-overlay" aria-hidden="true" />
         {children}
       </body>
     </html>

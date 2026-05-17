@@ -149,7 +149,7 @@ export default function AboutSection() {
       ref={sectionRef}
       id="about"
       // Gradient transitions seamlessly from Hero's bg-base into bg-warm
-      className="relative w-full min-h-screen bg-gradient-to-b from-bg-base via-bg-warm to-bg-warm text-parchment pt-32 pb-24 overflow-hidden"
+      className="relative w-full min-h-screen bg-gradient-to-b from-bg-deep via-bg-mid to-bg-mid text-parchment pt-32 pb-24 overflow-hidden"
     >
       {/* ── SVG grain filter definition — referenced by filter:url(#grain) ── */}
       <svg className="hidden" aria-hidden="true">
@@ -190,7 +190,7 @@ export default function AboutSection() {
             {/* Photo placeholder: MJ initials with film grain overlay.
                 border-radius 8px + 0.5px gold/20 border per spec. */}
             <div
-              className="relative aspect-[3/4] w-full overflow-hidden bg-bg-section/60"
+              className="relative aspect-[3/4] w-full overflow-hidden bg-raised/60"
               style={{
                 border: "0.5px solid rgba(200,168,75,0.2)",
                 borderRadius: "8px",
@@ -209,9 +209,9 @@ export default function AboutSection() {
                 style={{ filter: "url(#grain)" }}
               />
 
-              {/* Bottom vignette — blends photo into bg-warm */}
-              <div className="absolute inset-0 bg-gradient-to-t from-bg-warm via-transparent to-transparent opacity-80" />
-              <div className="absolute inset-0 bg-gradient-to-b from-bg-warm/20 via-transparent to-transparent opacity-70" />
+              {/* Bottom vignette — blends photo into bg-mid */}
+              <div className="absolute inset-0 bg-gradient-to-t from-bg-mid via-transparent to-transparent opacity-80" />
+              <div className="absolute inset-0 bg-gradient-to-b from-bg-mid/20 via-transparent to-transparent opacity-70" />
             </div>
 
             {/* Corner accent brackets — premium framing detail */}
@@ -249,7 +249,8 @@ export default function AboutSection() {
 
             {/* Eyebrow — lives inside right column, not floating above grid */}
             <motion.span
-              className="font-inter text-[9px] uppercase tracking-[0.35em] text-dim mb-5 block"
+              className="font-inter text-[10px] font-normal uppercase tracking-[0.4em] mb-5 block"
+              style={{ color: "rgba(200,168,75,0.35)" }}
               initial={{ opacity: 0, y: -10 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: "-80px" }}
@@ -259,7 +260,7 @@ export default function AboutSection() {
             </motion.span>
 
             {/* Section title — each word reveals via clip-path left→right wipe */}
-            <h2 className="font-cinzel text-3xl md:text-4xl text-parchment mb-7 leading-tight">
+            <h2 className="font-cinzel text-3xl md:text-4xl text-parchment font-normal mb-7 leading-tight" style={{ marginTop: "8px" }}>
               {TITLE_WORDS.map((word, i) => (
                 // clip-path wipe: each word masked right-to-left, staggered 80ms
                 <motion.span

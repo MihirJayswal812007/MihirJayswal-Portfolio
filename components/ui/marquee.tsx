@@ -46,11 +46,9 @@ export function Marquee({
     <div
       {...props}
       style={{
-        // Set CSS vars via inline style — never purged by Tailwind JIT.
-        // The component consumer can override --duration via their own style prop
-        // which will cascade correctly because inline styles on the same element
-        // take precedence over each other in source order (last wins in React).
-        "--duration": "40s",
+        // Defaults set via inline style — immune to Tailwind JIT purging.
+        // Consumer overrides --marquee-duration per-row via wrapper div style prop.
+        "--marquee-duration": "30s",
         "--gap": "1rem",
         ...(props.style as React.CSSProperties),
       } as React.CSSProperties}

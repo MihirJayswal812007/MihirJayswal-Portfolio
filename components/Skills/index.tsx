@@ -109,7 +109,7 @@ export default function SkillsSection() {
     <section
       id="skills"
       ref={sectionRef}
-      className="relative w-full bg-bg-section overflow-hidden"
+      className="relative w-full bg-raised overflow-hidden"
       style={{ padding: "clamp(5rem, 10vw, 8rem) 0" }}
     >
       {/* ── Ghost background text — decorative parallax word ─────────────── */}
@@ -129,16 +129,16 @@ export default function SkillsSection() {
           {/* Eyebrow: "DEVIL FRUIT ENCYCLOPEDIA" — fixed from old "ABILITIES" label */}
           <p
             ref={eyebrowRef}
-            style={{ opacity: 0 }}
-            className="font-inter text-[9px] uppercase tracking-[0.35em] text-dim mb-3"
+            style={{ opacity: 0, color: "rgba(200,168,75,0.35)" }}
+            className="font-inter text-[10px] font-normal uppercase tracking-[0.4em] mb-3"
           >
             Devil Fruit Encyclopedia
           </p>
           {/* Title: clip-path starts fully hidden right; GSAP wipes it open */}
           <h2
             ref={titleRef}
-            className="font-cinzel text-3xl md:text-4xl lg:text-5xl text-parchment font-bold tracking-tight"
-            style={{ clipPath: "inset(0 100% 0 0)" }}
+            className="font-cinzel text-[clamp(1.75rem,4vw,2.625rem)] text-parchment font-normal tracking-tight"
+            style={{ clipPath: "inset(0 100% 0 0)", marginTop: "8px", marginBottom: "24px" }}
           >
             Awakened Abilities
           </h2>

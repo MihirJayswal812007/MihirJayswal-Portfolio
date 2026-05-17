@@ -2,15 +2,23 @@
  * components/Skills/SkillMarquee.tsx
  *
  * Three horizontal marquee rows of skill badges.
- * Row grouping and speeds per spec:
+ *
+ * Row grouping and speeds:
  *   Row 1 — AI / ML :      direction left,  30s
  *   Row 2 — Frontend:      direction right, 45s
  *   Row 3 — Backend+Tools: direction left,  22s
  *
- * Badge anatomy: dot (5px, category colour) + skill name (no emojis).
- * Active filter → matching badges: opacity 100%, border gold/40.
- * Non-matching →  opacity 15%, border transparent.
- * "All Fruits" → every badge at full opacity.
+ * Badge anatomy: 5px coloured dot + skill name text. No emojis.
+ *
+ * Duration scoping:
+ *   Each row has its own wrapper <div> with --marquee-duration set as an
+ *   inline style. The Marquee component reads this variable for its animation.
+ *   Using a dedicated wrapper (not style prop on Marquee) ensures CSS variable
+ *   inheritance is unambiguous and survives Vercel's CDN edge caching.
+ *
+ * Filter logic:
+ *   activeCategory === "all"  → all badges: opacity 1, border gold/40
+ *   activeCategory matches    → matching badges full, others dimmed to 15%
  */
 
 "use client";
@@ -19,29 +27,29 @@ import React from "react";
 import { Marquee } from "@/components/ui/marquee";
 import { skills, type Category, type Skill } from "@/lib/skills-data";
 
-// ── Category colour tokens (inline style — unavoidable for dynamic colours) ──
+// ── Category colour tokens (inline — unavoidable for dynamic values) ───────
 const CAT_COLOR: Record<string, string> = {
-  "ai-ml":    "#378ADD",
-  frontend:   "#E24B4A",
-  backend:    "#C8A84B",
-  tools:      "#9CA3AF",
+  "ai-ml":   "#378ADD", // avatar-blue
+  frontend:  "#E24B4A", // luffy-red
+  backend:   "#5DCAA5", // teal-accent (was gold — changed for visual variety)
+  tools:     "#9CA3AF", // dim
 };
 
 // ── Row configuration ──────────────────────────────────────────────────────
 const ROWS: { skills: Skill[]; reverse: boolean; duration: number }[] = [
   {
     skills:   skills.filter((s) => s.category === "ai-ml"),
-    reverse:  false, // direction left
+    reverse:  false,
     duration: 30,
   },
   {
     skills:   skills.filter((s) => s.category === "frontend"),
-    reverse:  true,  // direction right
+    reverse:  true,
     duration: 45,
   },
   {
     skills:   skills.filter((s) => s.category === "backend" || s.category === "tools"),
-    reverse:  false, // direction left
+    reverse:  false,
     duration: 22,
   },
 ];
@@ -58,31 +66,29 @@ function SkillBadge({
 
   return (
     <span
-      // mx-1.5 ensures visible gap between badges — gap-(--gap) is Tailwind v4 syntax
-      // that does not resolve in this project's v3.4.1 setup, so margin is the fallback
-      className="inline-flex items-center gap-2 px-3 py-1.5 mx-1.5 rounded-full whitespace-nowrap transition-all duration-300"
+      className="flex items-center gap-2 px-3 py-1.5 mx-1.5 rounded-full whitespace-nowrap
+                 transition-all duration-300 hover:border-gold/30 hover:text-parchment/70"
       style={{
-        // Dynamic border: gold/40 when active, transparent when dimmed
-        border: `0.5px solid ${isActive ? "rgba(200,168,75,0.4)" : "transparent"}`,
-        opacity: isActive ? 1 : 0.15,
+        border:   `0.5px solid ${isActive ? "rgba(200,168,75,0.4)" : "transparent"}`,
+        opacity:  isActive ? 1 : 0.15,
+        color:    "rgba(232,223,192,0.4)",
+        fontSize: "10px",
+        letterSpacing: "0.15em",
+        textTransform: "uppercase",
+        fontFamily: "var(--font-inter)",
       }}
     >
-      {/* Category colour dot — 5px circle, no emoji */}
+      {/* 5px category dot — no emoji */}
       <span
         className="shrink-0 rounded-full"
         style={{
-          width: "5px",
-          height: "5px",
+          width:           "5px",
+          height:          "5px",
           backgroundColor: CAT_COLOR[skill.category],
+          flexShrink:      0,
         }}
       />
-      {/* Skill name: Inter 10px, uppercase, wide tracking. text-parchment/80 handles opacity */}
-      <span
-        className="font-inter uppercase text-parchment/80 leading-none"
-        style={{ fontSize: "10px", letterSpacing: "0.15em" }}
-      >
-        {skill.name}
-      </span>
+      {skill.name}
     </span>
   );
 }
@@ -96,29 +102,38 @@ export default function SkillMarquee({
   return (
     <div className="flex flex-col gap-3 w-full">
       {ROWS.map((row, rowIdx) => (
-        // repeat={2}: the marquee keyframe uses calc(-50%) which means
-        // "translate by exactly one copy width" — requires exactly 2 copies.
-        // With more copies the math breaks and rows 1+3 freeze or jump.
-        <Marquee
+        /*
+         * Each row gets its own wrapper div with --marquee-duration as an
+         * inline style. The Marquee component inherits this variable.
+         *
+         * WHY wrapper div instead of style prop on Marquee:
+         *   CSS custom properties cascade from parent → child.
+         *   A wrapper div guarantees the var is set on an ancestor of the
+         *   animating inner div, regardless of how Marquee merges its style prop.
+         *   This is the most reliable pattern for Vercel production.
+         *
+         * repeat={2}: keyframe uses calc(-50% - 0.5rem) = translate one copy.
+         *   With 2 copies this creates a seamless infinite loop.
+         *   With 4+ copies the math produces a partial-cycle jump.
+         */
+        <div
           key={rowIdx}
-          reverse={row.reverse}
-          pauseOnHover
-          repeat={2}
-          style={
-            {
-              "--duration": `${row.duration}s`,
-              "--gap":      "0.75rem",
-            } as React.CSSProperties
-          }
+          style={{ "--marquee-duration": `${row.duration}s` } as React.CSSProperties}
         >
-          {row.skills.map((skill) => (
-            <SkillBadge
-              key={skill.id}
-              skill={skill}
-              activeCategory={activeCategory}
-            />
-          ))}
-        </Marquee>
+          <Marquee
+            reverse={row.reverse}
+            pauseOnHover
+            repeat={2}
+          >
+            {row.skills.map((skill) => (
+              <SkillBadge
+                key={skill.id}
+                skill={skill}
+                activeCategory={activeCategory}
+              />
+            ))}
+          </Marquee>
+        </div>
       ))}
     </div>
   );

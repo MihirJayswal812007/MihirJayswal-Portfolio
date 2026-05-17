@@ -10,13 +10,15 @@
 
 /* ── CSS Custom Properties ─────────────────────────────────── */
 :root {
-  /* Colour tokens mirrored for CSS-in-JS / GSAP usage */
-  --color-bg-base:    #02020A;
-  --color-bg-section: #111827;
-  --color-bg-warm:    #1C1A14;
+  /* Colour tokens — unified blue-violet near-black family */
+  --color-bg-base:   #07070F;
+  --color-bg-deep:   #03030A;
+  --color-bg-mid:    #0C0C18;
+  --color-bg-raised: #101022;
   --color-gold:       #C8A84B;
   --color-avatar-blue:#378ADD;
   --color-luffy-red:  #E24B4A;
+  --color-teal:       #5DCAA5;
   --color-parchment:  #E8DFC0;
   --color-dim:        #9CA3AF;
 
@@ -44,7 +46,7 @@
     width: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #02020A;
+    background: #03030A;
   }
   ::-webkit-scrollbar-thumb {
     background: #C8A84B;
@@ -62,7 +64,7 @@
 
   /* Body defaults — font-inter applied via className in layout.tsx */
   body {
-    background-color: #02020A;
+    background-color: #07070F;
     color: #E8DFC0;
     min-height: 100vh;
     /* Hide default cursor — custom cursor replaces it on desktop */
@@ -81,8 +83,23 @@
     border-radius: 2px;
   }
   .theme {
-    --animate-marquee:    marquee var(--duration) infinite linear;
-    --animate-marquee-vertical:    marquee-vertical var(--duration) linear infinite;
+    --animate-marquee: marquee var(--marquee-duration) infinite linear;
+    --animate-marquee-vertical: marquee-vertical var(--marquee-duration) linear infinite;
+  }
+}
+
+/* ── Fixed grain overlay — sits behind all section content ────── */
+/* Add <div class="grain-overlay" aria-hidden="true" /> once in root layout. */
+/* z-index: 0 ensures it sits behind z-10+ section content and above body bg. */
+@layer utilities {
+  .grain-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 300px;
   }
 }
 
@@ -271,22 +288,4 @@
   50% { opacity: 1; transform: scale(1.05); }
   100% { opacity: 0.6; transform: scale(0.95); }
 }
-
-@theme inline {
-  @keyframes marquee {
-  from {
-    transform:    translateX(0);
-    }
-  to {
-    transform:    translateX(calc(-100% - var(--gap)));
-    }
-  }
-  @keyframes marquee-vertical {
-  from {
-    transform:    translateY(0);
-    }
-  to {
-    transform:    translateY(calc(-100% - var(--gap)));
-    }
-  }
-} 
+
