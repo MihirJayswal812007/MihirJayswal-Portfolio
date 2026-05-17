@@ -45,8 +45,17 @@ export function Marquee({
   return (
     <div
       {...props}
+      style={{
+        // Set CSS vars via inline style — never purged by Tailwind JIT.
+        // The component consumer can override --duration via their own style prop
+        // which will cascade correctly because inline styles on the same element
+        // take precedence over each other in source order (last wins in React).
+        "--duration": "40s",
+        "--gap": "1rem",
+        ...(props.style as React.CSSProperties),
+      } as React.CSSProperties}
       className={cn(
-        "group flex gap-[--gap] overflow-hidden p-2 [--duration:40s] [--gap:1rem]",
+        "group flex overflow-hidden p-2",
         {
           "flex-row": !vertical,
           "flex-col": vertical,
@@ -59,7 +68,7 @@ export function Marquee({
         .map((_, i) => (
           <div
             key={i}
-            className={cn("flex shrink-0 justify-around gap-[--gap]", {
+            className={cn("flex shrink-0 justify-around gap-[var(--gap)]", {
               "animate-marquee flex-row": !vertical && !reverse,
               "animate-marquee-reverse flex-row": !vertical && reverse,
               "animate-marquee-vertical flex-col": vertical,

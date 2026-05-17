@@ -177,11 +177,11 @@ export default function SkillsSection() {
           ))}
         </div>
 
-        {/* ── Icon Cloud — full width, 280px tall, monochrome parchment tint ─ */}
+        {/* ── Icon Cloud — full width, clipped to 320px, monochrome parchment tint ─ */}
         {/* scale 0.85→1 + opacity entrance via GSAP (see useEffect) */}
         <div
           ref={cloudRef}
-          style={{ opacity: 0, height: "280px" }}
+          style={{ opacity: 0, height: "320px", overflow: "hidden" }}
           className="w-full flex items-center justify-center mb-10"
         >
           <IconCloud slugs={cloudSlugs} />

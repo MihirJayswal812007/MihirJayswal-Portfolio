@@ -96,12 +96,14 @@ export default function SkillMarquee({
   return (
     <div className="flex flex-col gap-3 w-full">
       {ROWS.map((row, rowIdx) => (
-        // Each row has its own duration via --duration CSS variable (overrides default)
+        // repeat={2}: the marquee keyframe uses calc(-50%) which means
+        // "translate by exactly one copy width" — requires exactly 2 copies.
+        // With more copies the math breaks and rows 1+3 freeze or jump.
         <Marquee
           key={rowIdx}
           reverse={row.reverse}
           pauseOnHover
-          repeat={4}
+          repeat={2}
           style={
             {
               "--duration": `${row.duration}s`,
