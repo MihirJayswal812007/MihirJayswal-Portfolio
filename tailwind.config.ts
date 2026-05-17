@@ -12,6 +12,14 @@ const config: Config = {
     "./app/**/*.{js,ts,jsx,tsx,mdx}",
     "./lib/**/*.{js,ts,tsx}",
   ],
+  safelist: [
+    'animate-marquee',
+    'animate-marquee-reverse', 
+    'animate-marquee-vertical',
+    '[--duration:30s]',
+    '[--duration:45s]',
+    '[--duration:22s]',
+  ],
   theme: {
     extend: {
       // ── Colour tokens ─────────────────────────────────────────
@@ -82,10 +90,14 @@ const config: Config = {
           "0%":   { backgroundPosition: "-200% center" },
           "100%": { backgroundPosition:  "200% center" },
         },
-        // Horizontal marquee — translates by -100% so one full copy exits left
+        // Horizontal marquee
         marquee: {
           from: { transform: "translateX(0)" },
-          to:   { transform: "translateX(-100%)" },
+          to:   { transform: "translateX(calc(-50% - 0.5rem))" },
+        },
+        "marquee-reverse": {
+          from: { transform: "translateX(calc(-50% - 0.5rem))" },
+          to:   { transform: "translateX(0)" },
         },
         // Vertical marquee — same principle on Y axis
         "marquee-vertical": {
@@ -102,6 +114,7 @@ const config: Config = {
         shimmer:             "shimmer 3s linear infinite",
         // Speed is overridden per-row via --duration CSS variable on the element
         marquee:             "marquee var(--duration, 40s) linear infinite",
+        "marquee-reverse":   "marquee-reverse var(--duration, 40s) linear infinite",
         "marquee-vertical":  "marquee-vertical var(--duration, 40s) linear infinite",
       },
 
