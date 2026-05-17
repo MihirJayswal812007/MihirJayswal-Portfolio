@@ -1,21 +1,30 @@
-"use client";
-
 /**
  * components/Skills/index.tsx
  *
- * Skills Section — Devil Fruit Encyclopedia (redesigned).
+ * Skills Section — Devil Fruit Encyclopedia
  *
- * Layout (top → bottom):
- *  1. Section eyebrow + clip-path title reveal
- *  2. Filter tabs (All | AI/ML | Frontend | Backend | Tools)
- *  3. Icon Cloud  — 3D sphere, icons filtered by active tab
- *  4. Marquee rows — skill badges scrolling left/right, opacity controlled by filter
+ * LAYOUT DECISION: Full-width stack (Icon Cloud centred full-width above,
+ * three marquee rows below). Chosen over 45/55 side-by-side because:
+ *   1. The react-icon-cloud sphere needs a square-ish, uncompressed container.
+ *   2. Horizontal marquee rows are cinematic at full width — cramped at 55%.
+ *   3. One focal point at a time (cloud → marquee) reads more like editorial.
  *
- * Animation:
- *  - GSAP ScrollTrigger: eyebrow fades up, title clip-path wipes left→right
- *  - Icon Cloud: scales 0.8→1 + opacity 0→1 with spring after title entrance
- *  - Marquee: staggered fade-in after cloud entrance
+ * Top → bottom:
+ *   1. Ghost bg text (parallax)
+ *   2. Section header: eyebrow "DEVIL FRUIT ENCYCLOPEDIA" + title "Awakened Abilities"
+ *   3. Filter tabs: All Fruits / AI·ML / Frontend / Backend / Tools
+ *   4. Icon Cloud — full width, 280px height wrapper, monochrome parchment tint
+ *   5. Three marquee rows (AI/ML 30s left · Frontend 45s right · Backend+Tools 22s left)
+ *
+ * Filter → marquee connection:
+ *   Active category → matching badges: opacity 100%, border gold/40
+ *   Non-matching badges → opacity 15%, border transparent
+ *   "All Fruits" → all badges full opacity
+ *
+ * Mobile (<768px): single column, everything stacks naturally (flex-col).
  */
+
+"use client";
 
 import { useState, useRef, useEffect } from "react";
 import gsap from "gsap";
@@ -29,7 +38,7 @@ gsap.registerPlugin(ScrollTrigger);
 export default function SkillsSection() {
   const [activeCategory, setActiveCategory] = useState<Category>("all");
 
-  // Refs for GSAP targets
+  // Refs for GSAP entrance targets
   const sectionRef  = useRef<HTMLElement>(null);
   const eyebrowRef  = useRef<HTMLParagraphElement>(null);
   const titleRef    = useRef<HTMLHeadingElement>(null);
@@ -38,7 +47,7 @@ export default function SkillsSection() {
   const marqueeRef  = useRef<HTMLDivElement>(null);
   const ghostRef    = useRef<HTMLSpanElement>(null);
 
-  // ── GSAP entrance (ScrollTrigger — fires once) ──────────────
+  // ── GSAP entrance (fires once on scroll enter) ─────────────────────────
   useEffect(() => {
     if (!sectionRef.current) return;
 
@@ -60,14 +69,14 @@ export default function SkillsSection() {
       )
       // Eyebrow fades up
       .fromTo(eyebrowRef.current,
-        { opacity: 0, y: -16 },
-        { opacity: 1, y: 0, duration: 0.6 },
+        { opacity: 0, y: -14 },
+        { opacity: 1, y: 0, duration: 0.55 },
         0.2
       )
-      // Title: clip-path wipes left→right (mask-reveal)
+      // Title clip-path wipe left→right (matches About pattern for consistency)
       .fromTo(titleRef.current,
         { clipPath: "inset(0 100% 0 0)", opacity: 1 },
-        { clipPath: "inset(0 0% 0 0)", duration: 0.9 },
+        { clipPath: "inset(0 0% 0 0)", duration: 0.85 },
         0.45
       )
       // Filter tabs slide up
@@ -76,24 +85,24 @@ export default function SkillsSection() {
         { opacity: 1, y: 0, duration: 0.6 },
         0.8
       )
-      // Icon cloud scales in from 0.8 with spring feel
+      // Icon cloud scales in — spring feel via back.out easing
       .fromTo(cloudRef.current,
-        { opacity: 0, scale: 0.82 },
+        { opacity: 0, scale: 0.85 },
         { opacity: 1, scale: 1, duration: 0.9, ease: "back.out(1.4)" },
         1.0
       )
-      // Marquee rows stagger in
+      // Marquee rows fade in staggered after cloud
       .fromTo(marqueeRef.current,
-        { opacity: 0, y: 24 },
+        { opacity: 0, y: 20 },
         { opacity: 1, y: 0, duration: 0.7 },
-        1.3
+        1.35
       );
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
 
-  // Derived icon slugs for the current category filter
+  // Slugs filtered by active tab — passed to IconCloud for reactive sphere
   const cloudSlugs = getCloudSlugs(activeCategory);
 
   return (
@@ -103,27 +112,29 @@ export default function SkillsSection() {
       className="relative w-full bg-bg-section overflow-hidden"
       style={{ padding: "clamp(5rem, 10vw, 8rem) 0" }}
     >
-      {/* ── Ghost background text ─────────────────────────────── */}
+      {/* ── Ghost background text — decorative parallax word ─────────────── */}
       <span
         ref={ghostRef}
         style={{ opacity: 0 }}
-        className="absolute right-[-2vw] top-[10%] font-cinzel font-bold text-[18vw] leading-none text-parchment/[0.025] pointer-events-none select-none z-0 whitespace-nowrap"
+        className="absolute right-[-2vw] top-[8%] font-cinzel font-bold text-[18vw] leading-none text-parchment/[0.025] pointer-events-none select-none z-0 whitespace-nowrap"
+        aria-hidden="true"
       >
         ABILITIES
       </span>
 
       <div className="relative z-10 max-w-6xl mx-auto px-6 md:px-10">
 
-        {/* ── Header ────────────────────────────────────────────── */}
+        {/* ── Section header ─────────────────────────────────────────────── */}
         <div className="mb-10">
+          {/* Eyebrow: "DEVIL FRUIT ENCYCLOPEDIA" — fixed from old "ABILITIES" label */}
           <p
             ref={eyebrowRef}
             style={{ opacity: 0 }}
-            className="eyebrow mb-3"
+            className="font-inter text-[9px] uppercase tracking-[0.35em] text-dim mb-3"
           >
             Devil Fruit Encyclopedia
           </p>
-          {/* clip-path starts at inset(0 100% 0 0) — fully hidden right */}
+          {/* Title: clip-path starts fully hidden right; GSAP wipes it open */}
           <h2
             ref={titleRef}
             className="font-cinzel text-3xl md:text-4xl lg:text-5xl text-parchment font-bold tracking-tight"
@@ -133,7 +144,8 @@ export default function SkillsSection() {
           </h2>
         </div>
 
-        {/* ── Filter tabs ───────────────────────────────────────── */}
+        {/* ── Filter tabs ─────────────────────────────────────────────────── */}
+        {/* Active state: bg-gold/15, border-gold/50, text-gold — NOT solid bg-gold */}
         <div
           ref={tabsRef}
           style={{ opacity: 0 }}
@@ -142,87 +154,50 @@ export default function SkillsSection() {
           {CATEGORIES.map(({ key, label }) => (
             <button
               key={key}
+              id={`skills-tab-${key}`}
               onClick={() => setActiveCategory(key)}
-              className={[
-                "px-4 py-1.5 text-[10px] font-inter uppercase tracking-widest border transition-all duration-300",
+              className="px-4 py-1.5 text-[10px] font-inter uppercase tracking-widest rounded-full transition-all duration-150"
+              style={
                 activeCategory === key
-                  ? "bg-gold text-bg-base border-gold"
-                  : "text-parchment/40 border-parchment/12 hover:border-gold/40 hover:text-gold/70",
-              ].join(" ")}
+                  ? {
+                      // Active pill: subtle gold fill + gold border + gold text
+                      background: "rgba(200,168,75,0.15)",
+                      border:     "1px solid rgba(200,168,75,0.50)",
+                      color:      "#C8A84B",
+                    }
+                  : {
+                      background: "transparent",
+                      border:     "1px solid rgba(255,255,255,0.08)",
+                      color:      "rgba(232,223,192,0.35)",
+                    }
+              }
             >
               {label}
             </button>
           ))}
         </div>
 
-        {/* ── Two-column layout on lg+: Cloud left, marquee right ─ */}
-        <div className="flex flex-col lg:flex-row gap-10 lg:gap-16 items-center lg:items-center min-h-[600px]">
-
-          {/* Icon Cloud */}
-          <div
-            ref={cloudRef}
-            style={{ opacity: 0 }}
-            className="w-full lg:w-[45%] shrink-0 flex flex-col items-center"
-          >
-            <IconCloud slugs={cloudSlugs} />
-            <p className="text-center text-[10px] font-inter uppercase tracking-[0.4em] text-parchment/30 mt-6">
-              {activeCategory === "all"
-                ? "Full Stack Arsenal"
-                : CATEGORIES.find((c) => c.key === activeCategory)?.label}
-            </p>
-          </div>
-
-          {/* Marquee rows */}
-          <div
-            ref={marqueeRef}
-            style={{ opacity: 0 }}
-            className="w-full lg:w-[55%] flex flex-col justify-center gap-4 relative"
-          >
-            {/* Category legend */}
-            <div className="flex flex-wrap gap-4 mb-4 px-1 justify-center lg:justify-start">
-              {(["ai-ml", "frontend", "backend", "tools"] as const).map((cat) => {
-                const colors: Record<string, string> = {
-                  "ai-ml":   "#378ADD",
-                  frontend:  "#E24B4A",
-                  backend:   "#5DCAA5",
-                  tools:     "#9CA3AF",
-                };
-                const labels: Record<string, string> = {
-                  "ai-ml":  "AI / ML",
-                  frontend: "Frontend",
-                  backend:  "Backend",
-                  tools:    "Tools",
-                };
-                const isActive = activeCategory === "all" || activeCategory === cat;
-                return (
-                  <span
-                    key={cat}
-                    className="inline-flex items-center gap-1.5 text-[9px] font-inter uppercase tracking-widest"
-                    style={{
-                      color: isActive ? "rgba(232,223,192,0.6)" : "rgba(232,223,192,0.15)",
-                      transition: "color 0.4s ease",
-                    }}
-                  >
-                    <span
-                      className="w-1.5 h-1.5 rounded-full inline-block"
-                      style={{
-                        backgroundColor: colors[cat],
-                        opacity: isActive ? 1 : 0.2,
-                        transition: "opacity 0.4s ease",
-                        boxShadow: isActive ? `0 0 6px ${colors[cat]}` : "none",
-                      }}
-                    />
-                    {labels[cat]}
-                  </span>
-                );
-              })}
-            </div>
-
-            <SkillMarquee activeCategory={activeCategory} />
-          </div>
+        {/* ── Icon Cloud — full width, 280px tall, monochrome parchment tint ─ */}
+        {/* scale 0.85→1 + opacity entrance via GSAP (see useEffect) */}
+        <div
+          ref={cloudRef}
+          style={{ opacity: 0, height: "280px" }}
+          className="w-full flex items-center justify-center mb-10"
+        >
+          <IconCloud slugs={cloudSlugs} />
         </div>
 
-        {/* ── Section bottom rule ───────────────────────────────── */}
+        {/* ── Three marquee rows ─────────────────────────────────────────── */}
+        {/* Staggered fade-in after cloud via GSAP timeline (see useEffect) */}
+        <div
+          ref={marqueeRef}
+          style={{ opacity: 0 }}
+          className="w-full"
+        >
+          <SkillMarquee activeCategory={activeCategory} />
+        </div>
+
+        {/* ── Section bottom rule ────────────────────────────────────────── */}
         <div className="mt-16 h-[1px] bg-gradient-to-r from-transparent via-gold/20 to-transparent" />
       </div>
     </section>

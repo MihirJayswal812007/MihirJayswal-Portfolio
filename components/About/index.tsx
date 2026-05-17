@@ -1,239 +1,342 @@
 /**
  * components/About/index.tsx
- * 
- * About Section for Mihir Jayswal Portfolio
- * Two-column layout with photo and bio. Includes CSS film grain,
- * animated counters, staggered timeline nodes, and a parallax ghost text.
- * Blends seamlessly from Hero's bg-base to bg-warm using a gradient.
+ *
+ * About Section — "The Story So Far"
+ *
+ * Layout:  Two-column CSS grid — explicit 40% left / 60% right, gap 48px.
+ *          Left:  MJ initials photo placeholder + film-grain overlay + three counter boxes.
+ *          Right: Eyebrow → clip-path title reveal → bio → blockquote → horizontal timeline.
+ *
+ * Counter fix:  IntersectionObserver on the section element (threshold 0.2).
+ *               requestAnimationFrame loop — no setInterval.
+ *               Fires once; observer disconnects immediately after.
+ *
+ * Timeline:     GSAP, nodes fill gold with 200ms stagger on scroll enter.
+ *               toggleActions "play none none none" — never reverses.
+ *
+ * Mobile (<768px):  Single column; photo stacks above text.
  */
 
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useInView } from "framer-motion";
+import { motion } from "framer-motion";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { slideFromLeft, slideFromRight, fadeIn } from "@/lib/animations";
+import { slideFromLeft } from "@/lib/animations";
 
-// Register GSAP ScrollTrigger
+// Register GSAP plugin — guard for SSR
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-// Custom hook for animated counters
-function useCounter(endValue: number, duration: number = 2) {
+// ── Counter hook ─────────────────────────────────────────────────────────────
+// Uses requestAnimationFrame for a smooth ease-out-sine count-up.
+// `start()` is called externally by the IntersectionObserver on the section.
+// hasStarted ref prevents double-triggering on subsequent re-renders.
+function useCounter(endValue: number, duration = 1500) {
   const [count, setCount] = useState(0);
-  const ref = useRef<HTMLSpanElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-50px" });
+  const hasStarted = useRef(false);
+  const rafRef = useRef<number>(0);
 
-  useEffect(() => {
-    if (isInView) {
-      let startTime: number;
-      let animationFrame: number;
+  // Cancel any pending rAF on unmount to prevent memory leaks
+  useEffect(() => () => cancelAnimationFrame(rafRef.current), []);
 
-      const animate = (timestamp: number) => {
-        if (!startTime) startTime = timestamp;
-        const progress = Math.min((timestamp - startTime) / (duration * 1000), 1);
-        
-        // Easing out sine
-        const easeProgress = Math.sin((progress * Math.PI) / 2);
-        
-        setCount(Math.floor(easeProgress * endValue));
+  const start = () => {
+    if (hasStarted.current) return;
+    hasStarted.current = true;
 
-        if (progress < 1) {
-          animationFrame = requestAnimationFrame(animate);
-        } else {
-          setCount(endValue); // ensure it hits exactly endValue
-        }
-      };
+    let startTime = 0;
 
-      animationFrame = requestAnimationFrame(animate);
-      return () => cancelAnimationFrame(animationFrame);
-    }
-  }, [isInView, endValue, duration]);
+    // rAF loop: eases count from 0 → endValue over `duration` ms
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const progress = Math.min((timestamp - startTime) / duration, 1);
+      // Ease-out sine: fast start, decelerates into final value
+      const eased = Math.sin((progress * Math.PI) / 2);
+      setCount(Math.floor(eased * endValue));
+      if (progress < 1) {
+        rafRef.current = requestAnimationFrame(animate);
+      } else {
+        setCount(endValue); // guarantee exact final value
+      }
+    };
 
-  return { count, ref };
+    rafRef.current = requestAnimationFrame(animate);
+  };
+
+  return { count, start };
 }
 
-export default function AboutSection() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const ghostTextRef = useRef<HTMLDivElement>(null);
-  const timelineRef = useRef<HTMLDivElement>(null);
+// ── Title words for clip-path wipe reveal ─────────────────────────────────────
+const TITLE_WORDS = ["Building", "at", "the", "intersection", "of", "AI", "and", "craft."];
 
-  // Counters
-  const repos = useCounter(42);
-  const projects = useCounter(15);
-  const years = useCounter(2);
+// ── Timeline milestones ───────────────────────────────────────────────────────
+const TIMELINE = ["School", "B-Tech", "1st Hackathon", "UIDAI 2026"];
+
+// ── Component ─────────────────────────────────────────────────────────────────
+export default function AboutSection() {
+  const sectionRef  = useRef<HTMLElement>(null);
+  const ghostRef    = useRef<HTMLDivElement>(null);
+
+  // Three counter instances
+  const repos    = useCounter(11);
+  const projects = useCounter(4);
+  const years    = useCounter(3);
 
   useEffect(() => {
-    // Parallax effect for ghost text — GSAP tied to scroll
+    const section = sectionRef.current;
+    if (!section) return;
+
+    // ── IntersectionObserver for counters ──────────────────────────────────
+    // Attach to the section element (not an inner span) so it fires reliably.
+    // threshold 0.2 = 20% of section visible → start counting.
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          repos.start();
+          projects.start();
+          years.start();
+          observer.disconnect(); // fire once only
+        }
+      },
+      { threshold: 0.2 }
+    );
+    observer.observe(section);
+
+    // ── GSAP: parallax ghost text + timeline node fill ─────────────────────
     const ctx = gsap.context(() => {
-      // Moves ghost text down at 0.2x scroll speed
-      gsap.to(ghostTextRef.current, {
+      // Ghost text moves down at 0.3× scroll speed — subtle parallax depth
+      gsap.to(ghostRef.current, {
         yPercent: 30,
         ease: "none",
         scrollTrigger: {
-          trigger: sectionRef.current,
+          trigger: section,
           start: "top bottom",
           end: "bottom top",
           scrub: true,
         },
       });
 
-      // Timeline nodes filling gold staggered as they come into view
-      const nodes = gsap.utils.toArray(".timeline-node");
-      nodes.forEach((node) => {
-        gsap.to(node as HTMLElement, {
+      // Timeline nodes fill gold sequentially, 200ms stagger.
+      // toggleActions "play none none none" → fills once, never reverses on scroll-back.
+      const nodes = gsap.utils.toArray<HTMLElement>(".timeline-node");
+      nodes.forEach((node, i) => {
+        gsap.to(node, {
           backgroundColor: "#C8A84B",
           borderColor: "#C8A84B",
-          boxShadow: "0 0 15px rgba(200, 168, 75, 0.4)",
-          duration: 0.5,
+          boxShadow: "0 0 12px rgba(200,168,75,0.35)",
+          duration: 0.4,
+          delay: i * 0.2, // 200ms stagger between nodes
           scrollTrigger: {
-            trigger: node as HTMLElement,
-            start: "top 85%", // Triggers when the node is near the bottom of viewport
-            toggleActions: "play none none reverse",
+            trigger: section,
+            start: "bottom 85%",
+            toggleActions: "play none none none",
           },
         });
       });
-    }, sectionRef);
+    }, section);
 
-    return () => ctx.revert();
+    return () => {
+      ctx.revert();
+      observer.disconnect();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <section 
-      ref={sectionRef} 
-      id="about" 
-      // Gradient from bg-base (Hero) to bg-warm to create a seamless transition
-      className="relative w-full min-h-screen bg-gradient-to-b from-bg-base via-bg-warm to-bg-warm text-parchment pt-32 pb-24 overflow-hidden flex items-center"
+    <section
+      ref={sectionRef}
+      id="about"
+      // Gradient transitions seamlessly from Hero's bg-base into bg-warm
+      className="relative w-full min-h-screen bg-gradient-to-b from-bg-base via-bg-warm to-bg-warm text-parchment pt-32 pb-24 overflow-hidden"
     >
-      {/* ── Parallax Ghost Text ────────────────────────────── */}
-      <div 
-        ref={ghostTextRef}
+      {/* ── SVG grain filter definition — referenced by filter:url(#grain) ── */}
+      <svg className="hidden" aria-hidden="true">
+        <defs>
+          <filter id="grain">
+            <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" result="noise" />
+            <feColorMatrix type="matrix" values="1 0 0 0 0, 0 1 0 0 0, 0 0 1 0 0, 0 0 0 0.15 0" in="noise" result="coloredNoise" />
+            <feBlend in="SourceGraphic" in2="coloredNoise" mode="multiply" />
+          </filter>
+        </defs>
+      </svg>
+
+      {/* ── Parallax ghost text — moves with scroll for 3D depth feel ── */}
+      <div
+        ref={ghostRef}
         className="absolute top-10 left-0 w-full flex justify-center pointer-events-none select-none z-0"
+        aria-hidden="true"
       >
         <span className="text-[20vw] font-cinzel font-bold text-parchment opacity-[0.02] tracking-tighter whitespace-nowrap">
           STORY
         </span>
       </div>
 
-      {/* ── Main Container ─────────────────────────────────── */}
+      {/* ── Main container ─────────────────────────────────────────────────── */}
       <div className="container mx-auto px-6 md:px-12 lg:px-24 relative z-10 max-w-7xl">
-        
-        {/* Section Eyebrow — entry animation fading in */}
-        <motion.div 
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          variants={fadeIn}
-          className="mb-16 flex items-center gap-4"
-        >
-          <span className="text-gold text-[10px] font-inter uppercase tracking-[0.3em]">The Story So Far</span>
-          <div className="h-[1px] w-24 bg-gold/30" />
-        </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
-          
-          {/* ── Left Column: Photo ───────────────────────────── */}
-          <motion.div 
-            className="lg:col-span-5 relative group"
+        {/* Explicit 40/60 split — not col-span fractions, to guarantee proportions */}
+        <div className="grid grid-cols-1 lg:grid-cols-[40%_60%] gap-12 lg:gap-12 items-start">
+
+          {/* ── LEFT COLUMN: Photo placeholder + counters ─────────────────── */}
+          <motion.div
+            className="relative group"
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
+            viewport={{ once: true, margin: "-80px" }}
             variants={slideFromLeft}
           >
-            {/* Film Grain SVG Filter Definition */}
-            <svg className="hidden">
-              <defs>
-                <filter id="grain">
-                  <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" result="noise" />
-                  <feColorMatrix type="matrix" values="1 0 0 0 0, 0 1 0 0 0, 0 0 1 0 0, 0 0 0 0.15 0" in="noise" result="coloredNoise" />
-                  <feBlend in="SourceGraphic" in2="coloredNoise" mode="multiply" />
-                </filter>
-              </defs>
-            </svg>
+            {/* Photo placeholder: MJ initials with film grain overlay.
+                border-radius 8px + 0.5px gold/20 border per spec. */}
+            <div
+              className="relative aspect-[3/4] w-full overflow-hidden bg-bg-section/60"
+              style={{
+                border: "0.5px solid rgba(200,168,75,0.2)",
+                borderRadius: "8px",
+              }}
+            >
+              {/* MJ initials — Cinzel font, gold, centred */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className="font-cinzel text-5xl md:text-7xl text-gold select-none tracking-widest">
+                  M·J
+                </span>
+              </div>
 
-            <div className="relative aspect-[3/4] w-full overflow-hidden bg-bg-section/50 border border-gold/10">
-              {/* Photo Placeholder - Awwwards style abstract/cinematic setup */}
-              <div 
-                className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1554260570-9140fd3b7614?q=80&w=2574&auto=format&fit=crop')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-105 grayscale opacity-70 mix-blend-luminosity"
-              />
-              
-              {/* Grain Overlay - Intensifies on hover to simulate film developing */}
-              <div 
-                className="absolute inset-0 pointer-events-none transition-opacity duration-700 opacity-40 group-hover:opacity-100"
+              {/* Grain overlay: intensifies on hover (developing-photo effect) */}
+              <div
+                className="absolute inset-0 pointer-events-none transition-opacity duration-700 opacity-30 group-hover:opacity-80"
                 style={{ filter: "url(#grain)" }}
               />
-              
-              {/* Vignette for blending edges */}
-              <div className="absolute inset-0 bg-gradient-to-t from-bg-warm via-transparent to-transparent opacity-90" />
-              <div className="absolute inset-0 bg-gradient-to-b from-bg-warm/30 via-transparent to-transparent opacity-80" />
+
+              {/* Bottom vignette — blends photo into bg-warm */}
+              <div className="absolute inset-0 bg-gradient-to-t from-bg-warm via-transparent to-transparent opacity-80" />
+              <div className="absolute inset-0 bg-gradient-to-b from-bg-warm/20 via-transparent to-transparent opacity-70" />
             </div>
 
-            {/* Corner Accents for a premium framing effect */}
+            {/* Corner accent brackets — premium framing detail */}
             <div className="absolute -top-2 -left-2 w-4 h-4 border-t border-l border-gold/50" />
             <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b border-r border-gold/50" />
+
+            {/* ── Counter boxes — three side by side below photo ─────────── */}
+            {/* IntersectionObserver (on section) triggers start() for each counter */}
+            <div className="grid grid-cols-3 gap-3 mt-6">
+              {[
+                { count: repos.count,    label: "Repos",    suffix: "+" },
+                { count: projects.count, label: "Projects", suffix: ""  },
+                { count: years.count,    label: "Years",    suffix: ""  },
+              ].map(({ count, label, suffix }) => (
+                <div
+                  key={label}
+                  className="flex flex-col items-center justify-center py-3.5 px-2 rounded-lg"
+                  style={{ border: "0.5px solid rgba(200,168,75,0.12)" }}
+                >
+                  {/* Number: Cinzel, 32px, gold — counts up from 0 */}
+                  <span className="font-cinzel text-3xl text-gold leading-none tabular-nums">
+                    {count}{suffix}
+                  </span>
+                  {/* Label: Inter, 9px, uppercase, wide tracking */}
+                  <span className="font-inter text-[9px] uppercase tracking-[0.15em] text-dim mt-1.5">
+                    {label}
+                  </span>
+                </div>
+              ))}
+            </div>
           </motion.div>
 
-          {/* ── Right Column: Text & Timeline ────────────────── */}
-          <motion.div 
-            className="lg:col-span-7 flex flex-col justify-center"
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-100px" }}
-            variants={slideFromRight}
-          >
-            {/* Bio Text */}
-            <div className="font-inter text-parchment/80 leading-relaxed md:text-lg mb-8 space-y-6">
-              <p>
-                I am a 2nd-year B-Tech AI/ML engineer driven by an obsession with creating intelligent, beautiful, and cinematic digital experiences.
-              </p>
-              <p>
-                My approach to software is deeply influenced by cinematic storytelling—every interface should have rhythm, every interaction should have purpose, and the underlying architecture should be robust enough to support it all seamlessly.
-              </p>
-            </div>
+          {/* ── RIGHT COLUMN: Eyebrow, title, bio, quote, timeline ────────── */}
+          <div className="flex flex-col justify-start pt-0 lg:pt-10">
 
-            {/* Quote adapted from Shawshank Redemption */}
-            <blockquote className="font-cormorant italic text-2xl md:text-3xl text-gold mb-12 border-l-2 border-gold/30 pl-6 py-2 relative">
-              &quot;Get busy building, or get busy dying.&quot;
-              <span className="absolute top-0 -left-3 text-gold/10 text-6xl font-serif leading-none">&quot;</span>
-            </blockquote>
+            {/* Eyebrow — lives inside right column, not floating above grid */}
+            <motion.span
+              className="font-inter text-[9px] uppercase tracking-[0.35em] text-dim mb-5 block"
+              initial={{ opacity: 0, y: -10 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.5, delay: 0 }}
+            >
+              The Story So Far
+            </motion.span>
 
-            {/* Animated Counters triggered by intersection observer via useCounter */}
-            <div className="grid grid-cols-3 gap-6 mb-16 border-t border-b border-gold/10 py-8">
-              <div className="flex flex-col gap-1">
-                <span className="text-3xl md:text-4xl font-mono text-gold" ref={repos.ref}>{repos.count}+</span>
-                <span className="text-[10px] font-inter uppercase tracking-widest text-dim">Git Repos</span>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-3xl md:text-4xl font-mono text-gold" ref={projects.ref}>{projects.count}</span>
-                <span className="text-[10px] font-inter uppercase tracking-widest text-dim">Live Projects</span>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-3xl md:text-4xl font-mono text-gold" ref={years.ref}>{years.count}</span>
-                <span className="text-[10px] font-inter uppercase tracking-widest text-dim">Years Coding</span>
-              </div>
-            </div>
+            {/* Section title — each word reveals via clip-path left→right wipe */}
+            <h2 className="font-cinzel text-3xl md:text-4xl text-parchment mb-7 leading-tight">
+              {TITLE_WORDS.map((word, i) => (
+                // clip-path wipe: each word masked right-to-left, staggered 80ms
+                <motion.span
+                  key={i}
+                  className="inline-block mr-[0.3em]"
+                  initial={{ clipPath: "inset(0 100% 0 0)" }}
+                  whileInView={{ clipPath: "inset(0 0% 0 0)" }}
+                  viewport={{ once: true, margin: "-80px" }}
+                  transition={{ duration: 0.55, delay: 0.1 + i * 0.08, ease: "easeOut" }}
+                >
+                  {word}
+                </motion.span>
+              ))}
+            </h2>
 
-            {/* Horizontal Timeline */}
-            <div className="relative w-full mt-4" ref={timelineRef}>
-              {/* Base timeline line */}
-              <div className="absolute top-1/2 left-0 w-full h-[1px] bg-dim/20 -translate-y-1/2" />
-              
+            {/* Bio — rewritten: punchy, cinematic, first-person, mentions AI builds */}
+            <motion.p
+              className="font-inter text-[13px] text-parchment/50 leading-[1.8] mb-7"
+              initial={{ opacity: 0, y: 14 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              I&apos;m a 2nd-year B-Tech AI/ML engineer who builds at the edge of
+              intelligence and craft — shipping AI-augmented products that are fast,
+              cinematic, and obsessively detailed. Every line of code I write has a reason;
+              every interface I ship has a rhythm.
+            </motion.p>
+
+            {/* Quote — single string, no duplicated quote marks, gold left border */}
+            <motion.blockquote
+              className="font-cormorant italic text-[14px] leading-relaxed pl-4 mb-10"
+              style={{
+                // 1px gold left border per spec — inline style for dynamic value
+                borderLeft: "1px solid rgba(200,168,75,0.4)",
+                color: "rgba(200,168,75,0.4)",
+              }}
+              initial={{ opacity: 0, y: 14 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+            >
+              &ldquo;Get busy building, or get busy dying.&rdquo;
+            </motion.blockquote>
+
+            {/* ── Timeline — horizontal, node → line → node pattern ─────── */}
+            {/* Fades in at delay 0.4s; nodes then fill via GSAP (see useEffect) */}
+            <motion.div
+              className="relative w-full"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+            >
+              {/* Connecting base line — full-width hairline */}
+              <div className="absolute top-[3px] left-0 right-0 h-[1px] bg-dim/20" />
+
               <div className="flex justify-between relative z-10">
-                {["School", "B-Tech", "1st Hackathon", "UIDAI"].map((label) => (
+                {TIMELINE.map((label) => (
                   <div key={label} className="flex flex-col items-center gap-3 w-1/4">
-                    {/* Node — background animated by GSAP scroll trigger */}
-                    <div className="timeline-node w-3 h-3 rounded-full border-2 border-dim/50 bg-bg-warm transition-colors duration-500" />
-                    <span className="text-[9px] md:text-[11px] font-inter uppercase tracking-wider text-dim text-center">
+                    {/* Node: 8px circle. GSAP fills backgroundColor + borderColor to gold */}
+                    <div
+                      className="timeline-node w-2 h-2 rounded-full transition-colors duration-400"
+                      style={{
+                        border: "1px solid rgba(200,168,75,0.3)",
+                        backgroundColor: "transparent",
+                      }}
+                    />
+                    <span className="text-[9px] md:text-[10px] font-inter uppercase tracking-wider text-dim text-center leading-tight">
                       {label}
                     </span>
                   </div>
                 ))}
               </div>
-            </div>
+            </motion.div>
 
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

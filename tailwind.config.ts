@@ -82,14 +82,27 @@ const config: Config = {
           "0%":   { backgroundPosition: "-200% center" },
           "100%": { backgroundPosition:  "200% center" },
         },
+        // Horizontal marquee — translates by -100% so one full copy exits left
+        marquee: {
+          from: { transform: "translateX(0)" },
+          to:   { transform: "translateX(-100%)" },
+        },
+        // Vertical marquee — same principle on Y axis
+        "marquee-vertical": {
+          from: { transform: "translateY(0)" },
+          to:   { transform: "translateY(-100%)" },
+        },
       },
       animation: {
-        "grain-shift":  "grain-shift 0.15s steps(1) infinite",
-        breathe:        "breathe 4s ease-in-out infinite",
-        blink:          "blink 1s step-end infinite",
-        "scroll-pulse": "scroll-pulse 2s ease-in-out infinite",
-        crawl:          "crawl 12s linear forwards",
-        shimmer:        "shimmer 3s linear infinite",
+        "grain-shift":       "grain-shift 0.15s steps(1) infinite",
+        breathe:             "breathe 4s ease-in-out infinite",
+        blink:               "blink 1s step-end infinite",
+        "scroll-pulse":      "scroll-pulse 2s ease-in-out infinite",
+        crawl:               "crawl 12s linear forwards",
+        shimmer:             "shimmer 3s linear infinite",
+        // Speed is overridden per-row via --duration CSS variable on the element
+        marquee:             "marquee var(--duration, 40s) linear infinite",
+        "marquee-vertical":  "marquee-vertical var(--duration, 40s) linear infinite",
       },
 
       // ── Background sizes ─────────────────────────────────────
